@@ -1780,9 +1780,10 @@
 
         <div class="modal-footer-actions">
           <button type="button" onclick="toggleCateringModal(false)" class="px-5 py-2 text-sm font-bold text-slate-400 hover:text-slate-600 transition-colors">Cancel</button>
-          <button type="submit" class="bg-blue-600 text-white px-8 py-2.5 rounded-full text-sm font-bold shadow-md hover:bg-blue-700 transition-all active:scale-95 flex items-center gap-2">
-            <i data-lucide="plus" class="w-4 h-4"></i> Add
-          </button>
+<button type="submit" id="cat-submit-btn" class="bg-blue-600 text-white px-8 py-2.5 rounded-full text-sm font-bold shadow-md hover:bg-blue-700 transition-all active:scale-95 flex items-center gap-2">
+  <i data-lucide="plus" id="cat-btn-icon" class="w-4 h-4"></i> 
+  <span id="cat-btn-text">Add</span>
+</button>
         </div>
       </form>
     </div>
@@ -2623,6 +2624,10 @@ function editEntry(index) {
   document.getElementById('modal-heading').innerText = "Edit Catering";
   document.getElementById('edit-index').value = index;
   
+  // Update Button UI for Edit Mode
+  document.getElementById('cat-btn-text').innerText = "Save";
+  document.getElementById('cat-btn-icon').setAttribute('data-lucide', 'save');
+  
   document.getElementById('cat-date').value = date;
   document.getElementById('cat-time').value = time;
   document.getElementById('cat-name').value = item.name;
@@ -2631,14 +2636,22 @@ function editEntry(index) {
   document.getElementById('cat-amount').value = item.amount;
   
   toggleCateringModal(true);
+  lucide.createIcons(); // Refresh icons to show the 'save' icon
 }
 
 function openCateringModal() {
   const form = document.getElementById('cateringForm');
-  form.reset(); // Clears all inputs
+  form.reset(); 
+  
   document.getElementById('modal-heading').innerText = "Add Catering";
   document.getElementById('edit-index').value = "-1";
+  
+  // Reset Button UI for Add Mode
+  document.getElementById('cat-btn-text').innerText = "Add";
+  document.getElementById('cat-btn-icon').setAttribute('data-lucide', 'plus');
+  
   toggleCateringModal(true);
+  lucide.createIcons(); // Refresh icons to show the 'plus' icon
 }
 
 
