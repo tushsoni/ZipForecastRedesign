@@ -1328,84 +1328,21 @@
                     </td>
                   </tr>
 
-                                    <tr>
-                    <td class="pl-6 font-bold">Catering</td>
-                    <td>
-                      <div class="flex items-center gap-1 justify-start">
-                        <span class="text-slate-300 text-[13px]">$</span
-                        ><input
-                          type="text"
-                          value="400"
-                          class="input-hero font-bold text-slate-800 !text-left"
-                        />
-                      </div>
-                    </td>
-                    <td>
-                      <div class="flex items-center gap-1 justify-start">
-                        <span class="text-slate-300 text-[13px]">$</span
-                        ><input
-                          type="text"
-                          value="1200"
-                          class="input-hero font-bold text-slate-800 !text-left"
-                        />
-                      </div>
-                    </td>
-                    <td>
-                      <div class="flex items-center gap-1 justify-start">
-                        <span class="text-slate-300 text-[13px]">$</span
-                        ><input
-                          type="text"
-                          value="800"
-                          class="input-hero font-bold text-slate-800 !text-left"
-                        />
-                      </div>
-                    </td>
-                    <td>
-                      <div class="flex items-center gap-1 justify-start">
-                        <span class="text-slate-300 text-[13px]">$</span
-                        ><input
-                          type="text"
-                          value="700"
-                          class="input-hero font-bold text-slate-800 !text-left"
-                        />
-                      </div>
-                    </td>
-                    <td>
-                      <div class="flex items-center gap-1 justify-start">
-                        <span class="text-slate-300 text-[13px]">$</span
-                        ><input
-                          type="text"
-                          value="1350"
-                          class="input-hero font-bold text-slate-800 !text-left"
-                        />
-                      </div>
-                    </td>
-                    <td>
-                      <div class="flex items-center gap-1 justify-start">
-                        <span class="text-slate-300 text-[13px]">$</span
-                        ><input
-                          type="text"
-                          value="1470"
-                          class="input-hero font-bold text-slate-800 !text-left"
-                        />
-                      </div>
-                    </td>
-                    <td>
-                      <div class="flex items-center gap-1 justify-start">
-                        <span class="text-slate-300 text-[13px]">$</span
-                        ><input
-                          type="text"
-                          value="1500"
-                          class="input-hero font-bold text-slate-800 !text-left"
-                        />
-                      </div>
-                    </td>
-                    <td
-                      class="text-right pr-6 font-black text-slate-900 text-lg"
-                    >
+                   <tr class="bg-indigo-50/20">
+                    <td class="pl-6 font-bold text-slate-700">Catering</td>
+                    <td class="font-bold">$400</td>
+                    <td class="font-bold">$1200</td>
+                    <td class="font-bold">$800</td>
+                    <td class="font-bold">$700</td>
+                    <td class="font-bold">$1,350</td>
+                    <td class="font-bold">$1,500</td>
+                    <td class="font-bold">$1,470</td>
+                    <td class="text-right pr-6 font-black text-slate-900">
                       $7,420
                     </td>
                   </tr>
+
+
 
                   <tr class="bg-slate-50/30">
                     <td class="pl-6 font-bold">Increase/Decrease</td>
@@ -1810,9 +1747,14 @@
         <input type="hidden" id="edit-index">
         
 <div class="form-grid-compact">
-  <div class="field-group col-span-2">
-    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1.5">Date and Time <span class="text-rose-500">*</span></label>
-    <input type="datetime-local" id="cat-datetime" class="input-field-pro">
+  <div class="field-group">
+    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1.5">Date <span class="text-rose-500">*</span></label>
+    <input type="date" id="cat-date" class="input-field-pro">
+  </div>
+  
+  <div class="field-group">
+    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1.5">Time <span class="text-rose-500">*</span></label>
+    <input type="time" id="cat-time" class="input-field-pro">
   </div>
   
   <div class="field-group">
@@ -2676,10 +2618,13 @@ function deleteEntry(index) {
 
 function editEntry(index) {
   const item = cateringData[index];
+  const [date, time] = item.datetime.split('T');
+  
   document.getElementById('modal-heading').innerText = "Edit Catering";
   document.getElementById('edit-index').value = index;
   
-  document.getElementById('cat-datetime').value = item.datetime;
+  document.getElementById('cat-date').value = date;
+  document.getElementById('cat-time').value = time;
   document.getElementById('cat-name').value = item.name;
   document.getElementById('cat-email').value = item.email;
   document.getElementById('cat-mobile').value = item.mobile;
@@ -2701,27 +2646,28 @@ function openCateringModal() {
 document.getElementById('cateringForm').onsubmit = function(e) {
   e.preventDefault();
   
-  // These IDs must match your HTML exactly
-  const datetime = document.getElementById('cat-datetime').value;
+  const dateVal = document.getElementById('cat-date').value;
+  const timeVal = document.getElementById('cat-time').value;
   const name = document.getElementById('cat-name').value;
   const amount = document.getElementById('cat-amount').value;
-  const email = document.getElementById('cat-email').value;
-  const mobile = document.getElementById('cat-mobile').value;
 
-  // Validation
-  if (!datetime || !name || !amount) {
-    showToast("Mandatory fields (Date/Time, Name, Amount) required!");
+  // 1. Validation: Ensure toast clears correctly
+  if (!dateVal || !timeVal || !name || !amount) {
+    showToast("Mandatory fields (Date, Time, Name, Amount) required!");
     return;
   }
 
   const index = parseInt(document.getElementById('edit-index').value);
-  const newItem = { datetime, name, amount, email, mobile };
+  const newItem = {
+    datetime: `${dateVal}T${timeVal}`, // Combine for the table
+    name: name,
+    amount: amount,
+    email: document.getElementById('cat-email').value,
+    mobile: document.getElementById('cat-mobile').value
+  };
 
-  if(index === -1) {
-    cateringData.unshift(newItem);
-  } else {
-    cateringData[index] = newItem;
-  }
+  if(index === -1) cateringData.unshift(newItem);
+  else cateringData[index] = newItem;
   
   renderCateringTable();
   toggleCateringModal(false);
