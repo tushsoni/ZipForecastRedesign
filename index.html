@@ -619,7 +619,7 @@
 
       /* Hourly Forecast Modal Header Styling */
       #hourlyForecastModal .modal-header-pro {
-        background: #e2e8f0; /* Light grey background */
+        background: #f1f5f9; /* Light grey background */
         color: #1e293b; /* Black text */
         border-bottom: 1px solid #cbd5e1;
       }
@@ -630,7 +630,8 @@
 
       #hourlyForecastModal .modal-header-pro button {
         color: #ef4444; /* Red icon */
-        background-color: #fee2e2; /* Light red background */
+        background-color: #f1f5f9; /* Header color background */
+        border: 2px solid #ef4444; /* Red border */
         width: 36px;
         height: 36px;
         border-radius: 50%;
@@ -643,6 +644,7 @@
       #hourlyForecastModal .modal-header-pro button:hover {
         color: #ffffff; /* White icon on hover */
         background-color: #ef4444; /* Red background on hover */
+        border: 2px solid #ef4444; /* Red border on hover */
       }
 
       /* Hourly Forecast Modal Table Borders */
@@ -668,11 +670,11 @@
 
       /* AI Factors Popup Styling */
       #aiFactorsPopup {
-        background: white;
-        border: 1px solid #cbd5e1;
-        border-radius: 12px;
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15);
-        animation: slideDown 0.2s ease-out;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.12), 0 0 1px rgba(0, 0, 0, 0.08);
+        animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1);
       }
 
       @keyframes slideDown {
@@ -1829,70 +1831,69 @@
                   <!-- AI Factors Popup -->
                   <div
                     id="aiFactorsPopup"
-                    class="fixed bg-white rounded-lg shadow-lg border border-slate-200 p-6 z-50"
-                    style="width: 380px; max-height: 350px; display: none"
+                    class="fixed bg-white rounded-2xl shadow-xl border border-slate-200 z-50"
+                    style="width: 360px; max-height: 380px; display: none; padding: 24px;"
                   >
-                    <div class="flex items-start gap-3">
+                    <div class="flex items-center gap-2.5 mb-5">
                       <i
                         data-lucide="sparkles"
-                        class="w-5 h-5 text-indigo-600 mt-1 flex-shrink-0"
+                        class="w-5 h-5 text-indigo-600 flex-shrink-0"
                       ></i>
-                      <div class="flex-1">
-                        <h4 class="font-bold text-slate-800 mb-3 text-sm">
-                          AI Forecast - Key Factors Considered
-                        </h4>
-                        <div
-                          class="grid grid-cols-2 gap-2 text-sm text-slate-700 max-h-64 overflow-y-auto"
-                        >
-                          <div class="flex items-center gap-2">
-                            <span
-                              class="w-2 h-2 bg-indigo-600 rounded-full"
-                            ></span>
-                            <span>Day of the Week</span>
-                          </div>
-                          <div class="flex items-center gap-2">
-                            <span
-                              class="w-2 h-2 bg-indigo-600 rounded-full"
-                            ></span>
-                            <span>Time of Day</span>
-                          </div>
-                          <div class="flex items-center gap-2">
-                            <span
-                              class="w-2 h-2 bg-indigo-600 rounded-full"
-                            ></span>
-                            <span>Weather Conditions</span>
-                          </div>
-                          <div class="flex items-center gap-2">
-                            <span
-                              class="w-2 h-2 bg-indigo-600 rounded-full"
-                            ></span>
-                            <span>Holidays (State & Federal)</span>
-                          </div>
-                          <div class="flex items-center gap-2">
-                            <span
-                              class="w-2 h-2 bg-indigo-600 rounded-full"
-                            ></span>
-                            <span>Events</span>
-                          </div>
-                          <div class="flex items-center gap-2">
-                            <span
-                              class="w-2 h-2 bg-indigo-600 rounded-full"
-                            ></span>
-                            <span>Marketing Campaigns</span>
-                          </div>
-                          <div class="flex items-center gap-2">
-                            <span
-                              class="w-2 h-2 bg-indigo-600 rounded-full"
-                            ></span>
-                            <span>Economic Conditions</span>
-                          </div>
-                          <div class="flex items-center gap-2">
-                            <span
-                              class="w-2 h-2 bg-indigo-600 rounded-full"
-                            ></span>
-                            <span>Sports</span>
-                          </div>
-                        </div>
+                      <h4 class="font-bold text-slate-800 text-sm">
+                        AI Forecast - Key Factors Considered
+                      </h4>
+                    </div>
+                    <div
+                      class="grid grid-cols-2 gap-4 text-sm text-slate-700"
+                    >
+                
+                      <div class="flex items-start gap-2.5">
+                        <span
+                          class="w-2 h-2 bg-indigo-600 rounded-full mt-1.5 flex-shrink-0"
+                        ></span>
+                        <span class="text-slate-700 font-medium">Day of the Week</span>
+                      </div>
+                      <div class="flex items-start gap-2.5">
+                        <span
+                          class="w-2 h-2 bg-indigo-600 rounded-full mt-1.5 flex-shrink-0"
+                        ></span>
+                        <span class="text-slate-700 font-medium">Time of Day</span>
+                      </div>
+                      <div class="flex items-start gap-2.5">
+                        <span
+                          class="w-2 h-2 bg-indigo-600 rounded-full mt-1.5 flex-shrink-0"
+                        ></span>
+                        <span class="text-slate-700 font-medium">Weather Conditions</span>
+                      </div>
+                      <div class="flex items-start gap-2.5">
+                        <span
+                          class="w-2 h-2 bg-indigo-600 rounded-full mt-1.5 flex-shrink-0"
+                        ></span>
+                        <span class="text-slate-700 font-medium">Holidays (State & Federal)</span>
+                      </div>
+                      <div class="flex items-start gap-2.5">
+                        <span
+                          class="w-2 h-2 bg-indigo-600 rounded-full mt-1.5 flex-shrink-0"
+                        ></span>
+                        <span class="text-slate-700 font-medium">Events</span>
+                      </div>
+                      <div class="flex items-start gap-2.5">
+                        <span
+                          class="w-2 h-2 bg-indigo-600 rounded-full mt-1.5 flex-shrink-0"
+                        ></span>
+                        <span class="text-slate-700 font-medium">Marketing Campaigns</span>
+                      </div>
+                      <div class="flex items-start gap-2.5">
+                        <span
+                          class="w-2 h-2 bg-indigo-600 rounded-full mt-1.5 flex-shrink-0"
+                        ></span>
+                        <span class="text-slate-700 font-medium">Economic Conditions</span>
+                      </div>
+                      <div class="flex items-start gap-2.5">
+                        <span
+                          class="w-2 h-2 bg-indigo-600 rounded-full mt-1.5 flex-shrink-0"
+                        ></span>
+                        <span class="text-slate-700 font-medium">Sports</span>
                       </div>
                     </div>
                   </div>
@@ -2218,15 +2219,15 @@
                 </h3>
               </div>
               <div class="overflow-x-auto">
-                <table class="w-full modern-table text-left">
+                <table class="w-full modern-table text-left border-collapse">
                   <thead>
                     <tr class="bg-slate-50/50">
-                      <th class="pl-6 py-4">Date and Time</th>
-                      <th>Name</th>
-                      <th>Email</th>
-                      <th>Mobile Number</th>
-                      <th>Amount</th>
-                      <th class="text-right pr-6">Actions</th>
+                      <th class="pl-6 py-4 font-bold text-slate-700 text-xs uppercase tracking-widest border-right border-slate-200">Date and Time</th>
+                      <th class="px-4 py-4 font-bold text-slate-700 text-xs uppercase tracking-widest border-right border-slate-200">Name</th>
+                      <th class="px-4 py-4 font-bold text-slate-700 text-xs uppercase tracking-widest border-right border-slate-200">Email</th>
+                      <th class="px-4 py-4 font-bold text-slate-700 text-xs uppercase tracking-widest border-right border-slate-200">Mobile Number</th>
+                      <th class="px-4 py-4 font-bold text-slate-700 text-xs uppercase tracking-widest border-right border-slate-200">Amount</th>
+                      <th class="text-right pr-6 py-4 font-bold text-slate-700 text-xs uppercase tracking-widest">Actions</th>
                     </tr>
                   </thead>
                   <tbody
