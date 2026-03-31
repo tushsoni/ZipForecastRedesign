@@ -636,6 +636,27 @@
         color: #ffffff; /* White icon on hover */
         background-color: #ef4444; /* Red background on hover */
       }
+
+      /* Hourly Forecast Modal Table Borders */
+      #hourlyForecastModal .modern-table {
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        overflow: hidden;
+        border-collapse: collapse;
+      }
+
+      #hourlyForecastModal .modern-table th {
+        border: 1px solid #cbd5e1;
+        background-color: #f8fafc;
+      }
+
+      #hourlyForecastModal .modern-table td {
+        border: 1px solid #cbd5e1;
+      }
+
+      #hourlyForecastModal .modern-table tr:last-child td {
+        border-bottom: 1px solid #cbd5e1;
+      }
     </style>
   </head>
   <body class="h-screen overflow-hidden flex flex-col bg-[#f4f7fa]">
@@ -1962,7 +1983,7 @@
                     <thead class="sticky top-0 z-10">
                       <tr>
                         <th class="pl-6 bg-[#f8fafc] text-left">Time</th>
-                        <th id="dailyDayHeader" class="text-center bg-[#f8fafc]">MON</th>
+                        <th id="dailyDayHeader" class="text-center bg-[#f8fafc]">Sales $</th>
                       </tr>
                     </thead>
                     <tbody id="dailyHourlyTableBody">
@@ -3209,7 +3230,7 @@
         currentDayForHourly = day;
         dailyHourlyInterval = "hourly";
         document.getElementById("dailyHourlyTitle").innerText = `${day} - Hourly Forecast`;
-        document.getElementById("dailyDayHeader").innerText = dayAbbrMap[day];
+        document.getElementById("dailyDayHeader").innerText = "Sales $";
         
         // Reset interval buttons
         document.getElementById("daily-int-hourly").className = "px-4 py-1.5 rounded-md transition-all bg-white text-indigo-600 shadow-sm";
