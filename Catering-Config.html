@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forecast Settings</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #f0f2f5;
+            --header-dark: #002140;
+            --primary-blue: #1890ff;
+            --text-main: #262626;
+            --text-sub: #8c8c8c;
+            --accent-orange: #fa8c16;
+            --save-green: #52c41a;
+            --border-color: #f0f0f0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+        }
+
+        /* Top Nav Bar */
+        .navbar {
+            background-color: var(--header-dark);
+            height: 48px;
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            justify-content: space-between;
+            color: white;
+        }
+
+        .nav-left { display: flex; align-items: center; gap: 12px; font-size: 14px; }
+        
+        .settings-icon-wrapper {
+            background: white;
+            padding: 4px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .settings-icon-wrapper img { width: 20px; height: 20px; }
+
+        .nav-right { display: flex; align-items: center; gap: 15px; }
+
+        .corporate-btn {
+            background: white;
+            color: #595959;
+            padding: 4px 12px;
+            border-radius: 100px;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            border: 1px solid #d9d9d9;
+            cursor: pointer;
+        }
+        .corporate-btn i.fa-store { color: #52c41a; }
+        .corporate-btn i.fa-caret-down { color: #1890ff; margin-left: 4px; }
+
+        /* Breadcrumb */
+        .breadcrumb {
+            background: white;
+            padding: 8px 16px;
+            font-size: 12px;
+            color: #8c8c8c;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .breadcrumb span { color: #13c2c2; }
+
+        /* Main Area */
+        .wrapper { padding: 16px; }
+
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        h1 { font-size: 20px; font-weight: 500; margin: 0; color: #000; }
+
+        .btn-save {
+            background-color: #52c41a;
+            color: white;
+            border: none;
+            padding: 4px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Content Card */
+        .content-card {
+            background: white;
+            border: 1px solid #e8e8e8;
+            border-radius: 8px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .instruction {
+            font-size: 13px;
+            color: #595959;
+            margin-bottom: 32px;
+        }
+
+        .section-header {
+            color: #fa8c16;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 24px;
+            position: relative;
+        }
+        .section-header::after {
+            content: '';
+            display: block;
+            width: 100%;
+            height: 1px;
+            background: #f0f0f0;
+            position: absolute;
+            bottom: -8px;
+        }
+
+        /* Form Grid */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            column-gap: 80px;
+            row-gap: 24px;
+            margin-bottom: 40px;
+        }
+
+        .form-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .info-col { flex: 1; padding-right: 20px; }
+        .label-text { font-size: 14px; font-weight: 600; color: #262626; margin-bottom: 4px; display: block; }
+        .sub-text { font-size: 12px; color: #8c8c8c; line-height: 1.5; margin: 0; }
+
+        .control-col { width: 160px; display: flex; justify-content: flex-end; align-items: center; }
+
+        /* Carbon Copy Toggle */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 54px;
+            height: 24px;
+        }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #bfbfbf;
+            transition: .3s;
+            border-radius: 24px;
+        }
+        /* Text inside toggle */
+        .slider:after {
+            content: "No";
+            position: absolute;
+            right: 8px;
+            top: 3px;
+            color: white;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px; width: 18px;
+            left: 3px; bottom: 3px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+            z-index: 2;
+        }
+        input:checked + .slider { background-color: #1890ff; }
+        input:checked + .slider:after {
+            content: "Yes";
+            left: 8px;
+            right: auto;
+        }
+        input:checked + .slider:before { transform: translateX(30px); }
+
+        /* Select styling */
+        select, .time-input {
+            width: 100%;
+            height: 32px;
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+            padding: 0 10px;
+            font-size: 13px;
+            color: #595959;
+            outline: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2313c2c2%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+            background-repeat: no-repeat;
+            background-position: right 8px center;
+            background-size: 10px;
+        }
+
+        .info-icon { font-size: 14px; color: #000; margin-left: 8px; cursor: pointer; }
+
+        /* Support Button */
+        .support-btn {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: #4cc9c0;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        /* Time Dropdown (Logic remains the same) */
+        .control-col-relative { position: relative; width: 160px; }
+        .time-dropdown {
+            position: absolute;
+            top: 34px; left: 0; right: 0;
+            background: white;
+            border: 1px solid #1890ff;
+            z-index: 100;
+            display: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .time-option { padding: 8px 12px; font-size: 13px; cursor: pointer; }
+        .time-option:hover { background-color: #e6f7ff; }
+    </style>
+</head>
+<body>
+
+    <div class="navbar">
+        <div class="nav-left">
+            <div class="settings-icon-wrapper">
+                <img src="https://agcdn.altametrics.com/hw_prod_others/common/images/app_icon/Settings.svg" alt="Settings">
+            </div>
+            <i class="fas fa-th-large"></i>
+            <span>My App</span>
+        </div>
+        <div class="nav-right">
+            <div class="corporate-btn">
+                <i class="fas fa-store"></i> Corporate <i class="fas fa-caret-down"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="breadcrumb">
+        Manage Account > App Settings > Zip Forecasting > <span>Forecast Settings</span>
+    </div>
+
+<div class="wrapper">
+    <div class="content-card">
+        <div class="header-section" style="border-bottom: 1px solid #f0f0f0; padding-bottom: 16px; margin-bottom: 24px;">
+            <h1 style="font-size: 18px;">Forecasts Settings</h1>
+            <button class="btn-save"><i class="far fa-save"></i> Save</button>
+        </div>
+
+        <p class="instruction">Setup your forecast matrix here as you want to see it on the schedule pad</p>
+
+            <div class="section-header">Configure the Forecast Algorithm</div>
+            <div class="form-grid">
+                <div class="form-item">
+                    <div class="info-col">
+                        <label class="label-text">Enable Advanced Forecast</label>
+                        <p class="sub-text">Enable this for Advanced Forecast.</p>
+                    </div>
+                    <div class="control-col">
+                        <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+                    </div>
+                </div>
+
+                <div class="form-item">
+                    <div class="info-col">
+                        <label class="label-text">Enable Position Guide</label>
+                        <p class="sub-text">By enabling this flag, your forecasted sales/transactions will be used to calculate forecasted hours for each position.</p>
+                    </div>
+                    <div class="control-col">
+                        <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+                    </div>
+                </div>
+
+                <div class="form-item">
+                    <div class="info-col">
+                        <label class="label-text">Forecast Adjustment Interval</label>
+                        <p class="sub-text">Select to set up forecast intervals by 15/30/60 Minutes.</p>
+                    </div>
+                    <div class="control-col">
+                        <select>
+                            <option>60 Minute</option>
+                            <option>30 Minute</option>
+                            <option>15 Minute</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-item">
+                    <div class="info-col">
+                        <label class="label-text">Select Data Comparison Criteria</label>
+                        <p class="sub-text">Select to set up Data comparison criteria by last Week, Four Week, Last Year and Custom .</p>
+                    </div>
+                    <div class="control-col">
+                        <select>
+                            <option>Last Week</option>
+                            <option>Four Week</option>
+                            <option>Last Year</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-header">Configure the Forecast Algorithm</div>
+            <div class="form-grid">
+<div class="form-item">
+    <div class="info-col">
+        <label class="label-text">Select Forecast Method</label>
+        <p class="sub-text">Select to setup forcast method by labor percentage or hourly sales</p>
+    </div>
+    <div class="control-col" style="width: 160px; position: relative;">
+        <select style="width: 100%;">
+             <option>Labor Percentage</option>
+            <option>Staff Based on Hourly Sales</option>
+        </select>
+        <i class="fas fa-info-circle info-icon" style="position: absolute; right: -25px; top: 8px;"></i>
+    </div>
+</div>
+            </div>
+
+            <div class="section-header">Configure Catering</div>
+            <div class="form-grid">
+
+                                <div class="form-item">
+                    <div class="info-col">
+                        <label class="label-text">Enable Catering</label>
+                        <p class="sub-text">Enable this to allow manual catering</p>
+                    </div>
+                    <div class="control-col">
+                        <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+                    </div>
+                </div>
+
+                <div class="form-item">
+                    <div class="info-col">
+                        <label class="label-text">Completion Time Offset</label>
+                        <p class="sub-text">Set the time offset for catering orders by the time they should be completed.</p>
+                    </div>
+                    <div class="control-col-relative">
+                        <input type="text" class="time-input" placeholder="2:00" onkeyup="updateTimeDropdown(this)">
+                        <div class="time-dropdown"></div>
+                    </div>
+                </div>
+
+                <div class="form-item">
+                    <div class="info-col">
+                        <label class="label-text">Prep Time (Hours)</label>
+                        <p class="sub-text">Set the required preparation time in hours and minutes.</p>
+                    </div>
+                    <div class="control-col-relative">
+                        <input type="text" class="time-input" placeholder="4:00" onkeyup="updateTimeDropdown(this)">
+                        <div class="time-dropdown"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="support-btn">
+        <i class="fas fa-headset fa-lg"></i>
+    </div>
+
+    <script>
+        function updateTimeDropdown(input) {
+            const val = input.value.trim();
+            const dropdown = input.nextElementSibling;
+            dropdown.innerHTML = '';
+            if (!val || isNaN(val)) { dropdown.style.display = 'none'; return; }
+
+            ['00', '15', '30', '45'].forEach((min) => {
+                const div = document.createElement('div');
+                div.className = 'time-option';
+                div.innerText = val + ':' + min;
+                div.onclick = () => { input.value = val + ':' + min; dropdown.style.display = 'none'; };
+                dropdown.appendChild(div);
+            });
+            dropdown.style.display = 'block';
+        }
+        document.addEventListener('click', (e) => {
+            if (!e.target.classList.contains('time-input')) {
+                document.querySelectorAll('.time-dropdown').forEach(d => d.style.display = 'none');
+            }
+        });
+    </script>
+</body>
+</html>
