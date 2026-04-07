@@ -1,0 +1,3723 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ZIP Forecasting Redesign</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --primary: #6366f1;
+        --primary-dark: #4f46e5;
+        --bg-nav: #0b2545;
+        --bg-main: #f4f7fa;
+      }
+      body {
+        font-family: "Plus Jakarta Sans", sans-serif;
+        background-color: var(--bg-main);
+      }
+
+      /* ===== SIDEBAR ===== */
+
+      .sidebar {
+        position: absolute; /* KEY CHANGE */
+        top: 56px; /* height of top bar */
+        left: 0;
+        bottom: 0;
+
+        width: 72px;
+        transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        overflow: hidden;
+
+        background: var(--bg-nav);
+        z-index: 100; /* above content */
+
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* Expand on hover */
+      .sidebar:hover {
+        width: 230px;
+      }
+
+      /* ===== MENU ITEM ===== */
+
+      /* ===== MENU ITEM ===== */
+
+      .menu-item {
+        display: flex;
+        align-items: center;
+        justify-content: center; /* CENTER ICONS */
+        height: 48px;
+        cursor: pointer;
+        color: rgba(255, 255, 255, 0.7);
+        position: relative;
+        transition: 0.2s;
+      }
+
+      /* ICON SIZE FIX (Lucide SVG) */
+      .menu-item svg {
+        width: 20px;
+        height: 20px;
+      }
+
+      /* Hover */
+      .menu-item:hover {
+        background: rgba(255, 255, 255, 0.06);
+        color: white;
+      }
+
+      /* ===== ACTIVE STATE ===== */
+
+      .menu-item.active {
+        background: rgba(59, 130, 246, 0.18);
+        color: #3b82f6;
+      }
+
+      /* Blue vertical bar */
+      .menu-item.active::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 8px;
+        bottom: 8px;
+        width: 4px;
+        background: #3b82f6;
+        border-radius: 0 4px 4px 0;
+      }
+
+      /* ===== LABEL ===== */
+
+      .label {
+        opacity: 0;
+        width: 0;
+        overflow: hidden;
+        white-space: nowrap;
+        font-size: 13px;
+        font-weight: 600;
+        transition: opacity 0.2s;
+      }
+
+      /* Expanded sidebar */
+      .sidebar:hover .menu-item {
+        justify-content: flex-start;
+        padding-left: 20px;
+        gap: 14px;
+      }
+
+      .sidebar:hover .label {
+        opacity: 1;
+        width: auto;
+      }
+
+      /* SHIFT ICON BACK TO NORMAL WHEN EXPANDED */
+      .sidebar:hover .menu-item i {
+        width: 20px;
+        margin-left: 20px;
+      }
+
+      /* KPI Cards */
+      .hero-card {
+        background: white;
+        border-radius: 16px;
+        border: 1px solid #f1f5f9;
+        padding: 1rem; /* Reduced from 1.25rem */
+        transition: all 0.3s ease;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        min-height: 110px; /* Reduced from 130px */
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+      }
+
+      /* Update your CSS to this */
+      .hero-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05);
+        border-color: #3b82f6; /* This is the light blue color */
+      }
+
+      .icon-box {
+        width: 32px;
+        height: 32px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .trend-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 700;
+      }
+
+      .trend-up {
+        background: #f0fdf4;
+        color: #16a34a;
+      }
+      .trend-down {
+        background: #fef2f2;
+        color: #dc2626;
+      }
+
+      /* Small graph icon button on the right */
+      .mini-chart-trigger {
+        background: #f8fafc;
+        color: #10b981;
+        padding: 6px;
+        border-radius: 8px;
+        transition: 0.2s;
+      }
+      .hero-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        opacity: 0.8;
+      }
+
+      /* Tables */
+      .modern-table th {
+        background: #f8fafc;
+        color: #64748b;
+        font-weight: 700;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        padding: 14px 12px;
+        border-bottom: 1px solid #e2e8f0;
+        border-right: 1px solid #e2e8f0;
+      }
+      .modern-table th:last-child {
+        border-right: none;
+      }
+      .modern-table td {
+        padding: 10px 12px;
+        border-bottom: 1px solid #f1f5f9;
+        border-right: 1px solid #e2e8f0;
+        font-size: 13px;
+        color: #334155;
+      }
+      .modern-table td:last-child {
+        border-right: none;
+      }
+
+      .input-hero {
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        padding: 4px 8px;
+        font-weight: 700;
+        width: 80px;
+        text-align: right;
+        transition: all 0.2s;
+      }
+      .input-hero:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+      }
+
+      .date-select {
+        appearance: none;
+        background: white;
+        padding: 6px 32px 6px 12px;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        outline: none;
+      }
+
+      /* Modal */
+      .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.6);
+        backdrop-filter: blur(8px);
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        pointer-events: none;
+        transition: all 0.3s ease;
+      }
+      .modal-backdrop.active {
+        opacity: 1;
+        pointer-events: auto;
+      }
+      .modal-content {
+        background: white;
+        border-radius: 28px;
+        width: 95%;
+        max-width: 1000px;
+        padding: 32px;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        transform: translateY(20px);
+        transition: all 0.3s ease;
+      }
+      .modal-backdrop.active .modal-content {
+        transform: translateY(0);
+      }
+
+      .toggle-btn {
+        padding: 6px;
+        border-radius: 8px;
+        transition: all 0.2s;
+        color: #94a3b8;
+      }
+      .toggle-btn:hover {
+        background: #fff;
+        color: var(--primary);
+      }
+      .toggle-btn.active {
+        background: #fff;
+        color: var(--primary);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      }
+
+      .hourly-table-container {
+        max-height: 500px;
+        overflow-y: auto;
+        border-top: 1px solid #e2e8f0;
+      }
+      .hourly-table-container::-webkit-scrollbar {
+        width: 6px;
+      }
+      .hourly-table-container::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 10px;
+      }
+
+      .hourly-cell-input {
+        width: 45px; /* Fixed width to keep $ close to the numbers */
+        border: none;
+        background: transparent;
+        text-align: left; /* Text starts right after the $ */
+        font-size: 12px;
+        color: #1e293b;
+        padding: 0;
+        outline: none;
+        font-weight: 500;
+      }
+
+      .hourly-cell-input:focus {
+        background: #f1f5f9;
+        border-radius: 4px;
+      }
+
+      /* Increased size and styling for trend badges */
+      .trend-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 14px; /* Increased from 10px */
+        font-weight: 800; /* Extra bold for visibility */
+        transition: all 0.2s ease;
+      }
+
+      .trend-pill.up {
+        background: #f0fdf4;
+        color: #16a34a;
+      }
+
+      .trend-pill.down {
+        background: #fef2f2;
+        color: #dc2626;
+      }
+
+      /* Ensure the value and trend sit nicely together */
+      .value-container {
+        display: flex;
+        align-items: baseline;
+        gap: 12px;
+        margin-top: 8px;
+      }
+
+      /* Updated KPI Card Styles */
+      .hero-card {
+        background: white;
+        border-radius: 12px;
+        border: 1px solid #edf2f7;
+        padding: 12px;
+        transition: all 0.2s ease;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+        cursor: pointer;
+      }
+
+      .hero-card:hover {
+        border-color: #cbd5e1;
+        transform: translateY(-2px);
+      }
+
+      .tile-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+      }
+
+      .tile-footer {
+        display: flex;
+        border-top: 1px solid #f1f5f9;
+        margin-top: 4px;
+        padding-top: 8px;
+      }
+
+      .footer-item {
+        flex: 1;
+      }
+
+      .footer-item:first-child {
+        border-right: 1px solid #f1f5f9;
+        padding-right: 8px;
+      }
+
+      .footer-item:last-child {
+        padding-left: 8px;
+      }
+
+      /* AI Summary Specific */
+      .ai-summary-card {
+        background: linear-gradient(135deg, #6366f1 0%, #4338ca 100%);
+        color: white;
+      }
+
+      /* Align trend badges to the right */
+      .value-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        width: 100%;
+        margin-top: 4px;
+      }
+
+      /* Exact Screenshot Header Match */
+      .chart-header-main {
+        background: #1e3a8a; /* Deep blue background */
+        border-radius: 12px 12px 0 0; /* Rounded top corners */
+        padding: 10px 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        color: white;
+      }
+
+      .chart-header-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        font-weight: 700;
+      }
+
+      /* The badge/count on the right side of the header */
+      .header-badge {
+        background: rgba(255, 255, 255, 0.15);
+        padding: 2px 10px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 600;
+      }
+
+      /* Adjusting the toggle container to look better next to the new header */
+      .chart-controls-container {
+        background: white;
+        padding: 12px 16px;
+        border-bottom: 1px solid #f1f5f9;
+        display: flex;
+        justify-content: flex-end;
+      }
+
+      .card-body-wrapper {
+        background: white;
+        border-radius: 0 0 24px 24px;
+        border: 1px solid #e2e8f0;
+        border-top: none;
+        overflow: hidden;
+      }
+
+      /* Update these specific classes in your <style> tag */
+      .modal-body-wrapper {
+        background: #fbfcfd;
+        padding: 40px; /* Increased padding for a spacious feel since sidebar is gone */
+        flex: 1;
+      }
+
+      .modal-pro-header {
+        background: #f1f5f9; /* Light grey header as requested */
+        border-bottom: 1px solid #e2e8f0;
+        padding: 14px 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .form-grid-full {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+      }
+
+      /* Maintain the avatar badge style */
+      .modal-avatar-badge {
+        width: 30px;
+        height: 30px;
+        background: #db2777;
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        font-weight: 800;
+      }
+
+      /* Professional Slate Modal Header */
+      .modal-header-pro {
+        background: #1e293b; /* Deep Slate/Grey */
+        padding: 24px 32px;
+        color: white;
+        border-radius: 24px 24px 0 0;
+      }
+
+      .modal-header-pro h3 {
+        font-size: 1.25rem;
+        font-weight: 800;
+        letter-spacing: -0.025em;
+      }
+
+      .modal-header-pro p {
+        color: #94a3b8; /* Muted slate text */
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        margin-top: 4px;
+      }
+
+      /* Refined Input Styling */
+      .input-pro {
+        background: #f8fafc;
+        border: 1.5px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 12px 16px;
+        font-size: 14px;
+        width: 100%;
+        transition: all 0.2s ease;
+      }
+
+      .input-pro:focus {
+        background: white;
+        border-color: #6366f1;
+        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+        outline: none;
+      }
+
+      /* Professional Buttons */
+      .btn-save-pro {
+        background: #1e293b;
+        color: white;
+        padding: 14px;
+        border-radius: 14px;
+        font-weight: 700;
+        font-size: 14px;
+        transition: all 0.2s;
+      }
+
+      .btn-save-pro:hover {
+        background: #0f172a;
+        transform: translateY(-1px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+      }
+
+      /* Compact Modal Styling */
+      .modal-body-wrapper {
+        background: #ffffff;
+        padding: 24px 32px; /* Reduced vertical padding from 40px to 24px */
+        flex: 1;
+      }
+
+      .modal-pro-header {
+        background: #f1f5f9;
+        border-bottom: 1px solid #e2e8f0;
+        padding: 10px 24px; /* Slimmer header */
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      /* Tightened Form Grid */
+      .form-grid-compact {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px 24px; /* Reduced vertical gap between rows */
+      }
+
+      /* Action Footer with minimal top margin */
+      .modal-footer-actions {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 12px;
+        padding-top: 20px; /* Reduced from 32px */
+        margin-top: 16px;
+        border-top: 1px solid #f1f5f9;
+      }
+
+      /* Modern Input Style */
+      /* Final fix for "greyed out" look */
+      .input-field-pro {
+        width: 100%;
+        border: 1px solid #cbd5e1; /* Darker slate border for better definition */
+        border-radius: 8px;
+        padding: 10px 14px;
+        font-size: 13px;
+        color: #1e293b;
+        background-color: #ffffff !important; /* Pure white background */
+        box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05); /* Slight inner shadow to give depth */
+        transition: all 0.2s ease-in-out;
+      }
+
+      .input-field-pro:focus {
+        outline: none;
+        border-color: #3b82f6; /* Blue border on focus */
+        background-color: #ffffff;
+        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1); /* Subtle blue glow */
+      }
+
+      /* Ensure placeholder text isn't too light */
+      .input-field-pro::placeholder {
+        color: #94a3b8;
+      }
+
+      .input-field-pro[readonly] {
+        background-color: #f1f5f9 !important; /* Light grey bg */
+        color: #64748b; /* Muted text color */
+        border-color: #e2e8f0;
+      }
+
+      /* Hourly Forecast Modal Header Styling */
+      #hourlyForecastModal .modal-header-pro {
+        background: #f1f5f9; /* Light grey background */
+        color: #1e293b; /* Black text */
+        border-bottom: 1px solid #cbd5e1;
+      }
+
+      #hourlyForecastModal .modal-header-pro h3 {
+        color: #1e293b; /* Black heading */
+      }
+
+      #hourlyForecastModal .modal-header-pro button {
+        color: #ef4444; /* Red icon */
+        background-color: #f1f5f9; /* Header color background */
+        border: 2px solid #ef4444; /* Red border */
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+      }
+
+      #hourlyForecastModal .modal-header-pro button:hover {
+        color: #ffffff; /* White icon on hover */
+        background-color: #ef4444; /* Red background on hover */
+        border: 2px solid #ef4444; /* Red border on hover */
+      }
+
+      /* Hourly Forecast Modal Table Borders */
+      #hourlyForecastModal .modern-table {
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        overflow: hidden;
+        border-collapse: collapse;
+      }
+
+      #hourlyForecastModal .modern-table th {
+        border: 1px solid #cbd5e1;
+        background-color: #f8fafc;
+      }
+
+      #hourlyForecastModal .modern-table td {
+        border: 1px solid #cbd5e1;
+      }
+
+      #hourlyForecastModal .modern-table tr:last-child td {
+        border-bottom: 1px solid #cbd5e1;
+      }
+
+      /* AI Factors Popup Styling */
+      #aiFactorsPopup {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.12), 0 0 1px rgba(0, 0, 0, 0.08);
+        animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      @keyframes slideDown {
+        from {
+          opacity: 0;
+          transform: translateY(-8px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    </style>
+  </head>
+  <body class="h-screen overflow-hidden flex flex-col bg-[#f4f7fa]">
+    <!-- TOP BAR -->
+    <div
+      class="h-14 bg-[#0b2545] text-white flex items-center justify-between px-5 shrink-0 z-50 shadow-md"
+    >
+      <div class="flex items-center gap-6 text-[13px]">
+        <div
+          class="flex items-center gap-2 font-bold tracking-tight text-lg mr-4"
+        >
+          <i data-lucide="zap" class="w-5 h-5 text-blue-400 fill-current"></i>
+          <span>ZIP<span class="text-blue-400">FORECAST</span></span>
+        </div>
+        <div
+          class="flex items-center gap-2 font-medium opacity-80 hover:opacity-100 cursor-pointer"
+        >
+          <i data-lucide="home" class="w-4 h-4"></i><span>Dashboard</span>
+        </div>
+        <div
+          class="flex items-center gap-2 font-medium opacity-80 hover:opacity-100 cursor-pointer"
+        >
+          <i data-lucide="calendar-days" class="w-4 h-4"></i
+          ><span>Schedule</span>
+        </div>
+        <div class="flex items-center gap-2 font-medium">
+          <i data-lucide="map-pin" class="w-4 h-4 text-blue-400"></i
+          ><span>085 - Del Mar</span>
+        </div>
+      </div>
+      <div class="flex items-center gap-5 text-[13px]">
+        <div class="flex items-center gap-2">
+          <i data-lucide="cloud" class="w-4 h-4"></i><span>75°F</span>
+        </div>
+        <div class="border-l border-blue-700 h-5"></div>
+        <div class="font-mono text-[13px] opacity-80 uppercase tracking-wider">
+          04:33 AM LOS ANGELES
+        </div>
+        <div
+          class="w-8 h-8 rounded-full bg-slate-400 border-2 border-slate-300 flex items-center justify-center overflow-hidden cursor-pointer"
+        >
+          <i data-lucide="user" class="w-5 h-5 text-white"></i>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex flex-1 overflow-hidden">
+      <!-- SIDEBAR -->
+      <aside class="sidebar flex flex-col justify-between shrink-0">
+        <div class="pt-2 w-full">
+          <div
+            class="menu-item active"
+            onclick="switchTab('detail')"
+            id="side-fore"
+          >
+            <i data-lucide="trending-up" class="w-5 h-5"></i>
+            <span class="label">Forecasts</span>
+          </div>
+          <div
+            class="menu-item"
+            onclick="switchTab('dashboard')"
+            id="side-dash"
+          >
+            <i data-lucide="layout-grid" class="w-5 h-5"></i>
+            <span class="label">Actual Sales</span>
+          </div>
+          <div
+            class="menu-item"
+            onclick="switchTab('catering')"
+            id="side-catering"
+          >
+            <i data-lucide="utensils" class="w-5 h-5"></i>
+            <span class="label">Catering</span>
+          </div>
+          <div class="menu-item">
+            <i data-lucide="calendar" class="w-5 h-5"></i>
+            <span class="label">Events</span>
+          </div>
+          <div class="menu-item">
+            <i data-lucide="clock" class="w-5 h-5"></i>
+            <span class="label">Employees</span>
+          </div>
+        </div>
+        <div class="pb-6 mt-auto w-[72px] flex flex-col items-center gap-4">
+          <div
+            class="w-12 h-12 bg-[#2563eb] rounded-full flex items-center justify-center cursor-pointer shadow-lg hover:bg-blue-500 transition-colors shrink-0"
+          >
+            <i data-lucide="plus" class="w-6 h-6 text-white"></i>
+          </div>
+
+          <div
+            onclick="window.open('Catering-Config.html', '_blank')"
+            class="w-12 h-12 bg-slate-800/40 rounded-full flex items-center justify-center cursor-pointer hover:bg-slate-700/60 transition-colors shrink-0"
+          >
+            <i data-lucide="settings" class="w-5 h-5 text-white/70"></i>
+          </div>
+        </div>
+      </aside>
+
+      <!-- MAIN WORKSPACE -->
+      <div class="flex-1 flex flex-col overflow-hidden pl-[72px]">
+        <!-- Local Header -->
+        <div
+          id="local-header"
+          class="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between shrink-0"
+        >
+          <div class="flex items-center gap-6">
+            <div class="flex bg-slate-100 p-1 rounded-xl">
+              <button
+                onclick="switchTab('dashboard')"
+                id="btn-dash"
+                class="px-5 py-2 rounded-lg text-sm font-bold transition-all bg-white text-indigo-600 shadow-sm"
+              >
+                Dashboard
+              </button>
+              <button
+                onclick="switchTab('detail')"
+                id="btn-detail"
+                class="px-5 py-2 rounded-lg text-sm font-bold transition-all text-slate-500 hover:text-slate-800"
+              >
+                Forecast Detail
+              </button>
+            </div>
+            <div class="flex items-center gap-3">
+              <div
+                class="flex items-center bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm"
+              >
+                <button class="p-2 border-r hover:bg-slate-50">
+                  <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                </button>
+                <div class="px-4 text-[13px] font-bold">
+                  02/02/2026 - 02/08/2026
+                </div>
+                <button class="p-2 border-l hover:bg-slate-50">
+                  <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                </button>
+              </div>
+              <button
+                class="bg-blue-600 text-white px-6 py-2 rounded-lg text-sm font-bold shadow-lg shadow-blue-200"
+              >
+                GO
+              </button>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-3"></div>
+        </div>
+
+        <!-- CONTENT -->
+        <div
+          class="flex-1 overflow-y-auto p-2.5 space-y-2.5"
+          id="scroll-target"
+        >
+          <!-- VIEW: DASHBOARD -->
+          <div id="view-dashboard" class="space-y-2.5">
+            <!-- HERO KPI TILES -->
+            <div class="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-7 gap-3">
+              <div class="hero-card" onclick="openModal('Actual Sales')">
+                <div class="tile-header">
+                  <div class="flex items-center gap-2">
+                    <div
+                      class="w-7 h-7 rounded bg-blue-50 flex items-center justify-center text-blue-600"
+                    >
+                      <i data-lucide="dollar-sign" class="w-4 h-4"></i>
+                    </div>
+                    <span class="text-[13px] font-bold text-slate-500"
+                      >Actual Sales</span
+                    >
+                  </div>
+                  <i
+                    data-lucide="trending-up"
+                    class="w-4 h-4 text-emerald-500"
+                  ></i>
+                </div>
+                <div class="value-container">
+                  <h3 class="text-2xl font-bold text-slate-800">$9,971</h3>
+                  <span
+                    class="text-[13px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full"
+                    >↑ +$412 vs prev</span
+                  >
+                </div>
+                <div class="tile-footer">
+                  <div class="footer-item">
+                    <p class="text-[13px] uppercase font-bold text-slate-400">
+                      Yesterday
+                    </p>
+                    <p class="text-[13px] font-bold text-slate-700">$9,203</p>
+                  </div>
+                  <div class="footer-item">
+                    <p class="text-[13px] uppercase font-bold text-slate-400">
+                      WTD
+                    </p>
+                    <p class="text-[13px] font-bold text-slate-700">$7688</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="hero-card" onclick="openModal('Forecasted Sales')">
+                <div class="tile-header">
+                  <div class="flex items-center gap-2">
+                    <div
+                      class="w-7 h-7 rounded bg-orange-50 flex items-center justify-center text-orange-500"
+                    >
+                      <i data-lucide="bar-chart-3" class="w-4 h-4"></i>
+                    </div>
+                    <span class="text-[13px] font-bold text-slate-500"
+                      >Forecasted Sales</span
+                    >
+                  </div>
+                  <i
+                    data-lucide="trending-up"
+                    class="w-4 h-4 text-emerald-500"
+                  ></i>
+                </div>
+                <div class="value-container">
+                  <h3 class="text-2xl font-bold text-slate-800">$45,434</h3>
+                  <span
+                    class="text-[13px] font-bold text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded-full"
+                    >↓ -0.47%</span
+                  >
+                </div>
+                <div class="tile-footer">
+                  <div class="footer-item">
+                    <p class="text-[13px] uppercase font-bold text-slate-400">
+                      Yesterday
+                    </p>
+                    <p class="text-[13px] font-bold text-slate-700">$35,434</p>
+                  </div>
+                  <div class="footer-item">
+                    <p class="text-[13px] uppercase font-bold text-slate-400">
+                      WTD
+                    </p>
+                    <p class="text-[13px] font-bold text-slate-700">$55,434</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="hero-card" onclick="openModal('Adj Forecast Sales')">
+                <div class="tile-header">
+                  <div class="flex items-center gap-2">
+                    <div
+                      class="w-7 h-7 rounded bg-emerald-50 flex items-center justify-center text-emerald-600"
+                    >
+                      <i data-lucide="edit-3" class="w-4 h-4"></i>
+                    </div>
+                    <span class="text-[13px] font-bold text-slate-500"
+                      >Adj. Forecast Sales</span
+                    >
+                  </div>
+                  <i
+                    data-lucide="trending-up"
+                    class="w-4 h-4 text-emerald-500"
+                  ></i>
+                </div>
+                <div class="value-container">
+                  <h3 class="text-2xl font-bold text-slate-800">$65,341</h3>
+                  <span
+                    class="text-[13px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full"
+                    >↑ 1.45%</span
+                  >
+                </div>
+                <div class="tile-footer">
+                  <div class="footer-item">
+                    <p class="text-[13px] uppercase font-bold text-slate-400">
+                      Yesterday
+                    </p>
+                    <p class="text-[13px] font-bold text-slate-700">$62,410</p>
+                  </div>
+                  <div class="footer-item">
+                    <p class="text-[13px] uppercase font-bold text-slate-400">
+                      WTD
+                    </p>
+                    <p class="text-[13px] font-bold text-slate-600">$56,401</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="hero-card" onclick="openModal('Actual Trans')">
+                <div class="tile-header">
+                  <div class="flex items-center gap-2">
+                    <div
+                      class="w-7 h-7 rounded bg-indigo-50 flex items-center justify-center text-indigo-600"
+                    >
+                      <i data-lucide="users" class="w-4 h-4"></i>
+                    </div>
+                    <span class="text-[13px] font-bold text-slate-500"
+                      >Actual Trans</span
+                    >
+                  </div>
+                  <i
+                    data-lucide="trending-up"
+                    class="w-4 h-4 text-emerald-500"
+                  ></i>
+                </div>
+                <div class="value-container">
+                  <h3 class="text-2xl font-bold text-slate-800">393</h3>
+                  <span
+                    class="text-[13px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full"
+                    >↑ +12 last hr</span
+                  >
+                </div>
+                <div class="tile-footer">
+                  <div class="footer-item">
+                    <p class="text-[13px] uppercase font-bold text-slate-400">
+                      Yesterday
+                    </p>
+                    <p class="text-[13px] font-bold text-slate-700">475</p>
+                  </div>
+                  <div class="footer-item">
+                    <p class="text-[13px] uppercase font-bold text-slate-400">
+                      WTD
+                    </p>
+                    <p class="text-[13px] font-bold text-slate-700">374</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="hero-card" onclick="openModal('Forecasted Trans')">
+                <div class="tile-header">
+                  <div class="flex items-center gap-2">
+                    <div
+                      class="w-7 h-7 rounded bg-cyan-50 flex items-center justify-center text-cyan-600"
+                    >
+                      <i data-lucide="user-check" class="w-4 h-4"></i>
+                    </div>
+                    <span class="text-[13px] font-bold text-slate-500"
+                      >Forecasted Trans</span
+                    >
+                  </div>
+                  <i
+                    data-lucide="trending-up"
+                    class="w-4 h-4 text-emerald-500"
+                  ></i>
+                </div>
+                <div class="value-container">
+                  <h3 class="text-2xl font-bold text-slate-800">1,814</h3>
+                  <span
+                    class="text-[13px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full"
+                    >↑ 0.6%</span
+                  >
+                </div>
+                <div class="tile-footer">
+                  <div class="footer-item">
+                    <p class="text-[13px] uppercase font-bold text-slate-400">
+                      Yesterday
+                    </p>
+                    <p class="text-[13px] font-bold text-slate-700">1,745</p>
+                  </div>
+                  <div class="footer-item">
+                    <p class="text-[13px] uppercase font-bold text-slate-400">
+                      WTD
+                    </p>
+                    <p class="text-[13px] font-bold text-slate-700">1,400</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="hero-card" onclick="openModal('Adj Forecast Trans')">
+                <div class="tile-header">
+                  <div class="flex items-center gap-2">
+                    <div
+                      class="w-7 h-7 rounded bg-pink-50 flex items-center justify-center text-pink-600"
+                    >
+                      <i data-lucide="user-plus" class="w-4 h-4"></i>
+                    </div>
+                    <span class="text-[13px] font-bold text-slate-500"
+                      >Adj. Transactions</span
+                    >
+                  </div>
+                </div>
+                <div class="value-container">
+                  <h3 class="text-2xl font-bold text-slate-800">1,900</h3>
+                  <span
+                    class="text-[13px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full"
+                    >↑ 2.6%</span
+                  >
+                </div>
+                <div class="tile-footer">
+                  <div class="footer-item">
+                    <p class="text-[13px] uppercase font-bold text-slate-400">
+                      Yesterday
+                    </p>
+                    <p class="text-[13px] font-bold text-slate-700">1,745</p>
+                  </div>
+                  <div class="footer-item">
+                    <p class="text-[13px] uppercase font-bold text-slate-400">
+                      WTD
+                    </p>
+                    <p class="text-[13px] font-bold text-slate-700">1,600</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="hero-card ai-summary-card relative overflow-hidden">
+                <div class="flex justify-between">
+                  <div class="flex items-center gap-2">
+                    <i data-lucide="sparkles" class="w-4 h-4 text-white"></i>
+                    <span
+                      class="text-[13px] font-bold uppercase tracking-wider text-white"
+                      >AI Forecast Summary</span
+                    >
+                  </div>
+                  <div class="bg-white/20 p-1 rounded cursor-pointer">
+                    <i
+                      data-lucide="chevron-right"
+                      class="w-4 h-4 text-white"
+                    ></i>
+                  </div>
+                </div>
+                <p class="text-[11px] leading-tight mt-1 opacity-90 text-white">
+                  Forecast is 96% accurate today. High demand expected during 6
+                  PM - 8 PM dinner rush.
+                </p>
+                <div class="tile-footer border-white/20 mt-auto">
+                  <div class="footer-item border-white/20">
+                    <p
+                      class="text-[12px] uppercase font-bold opacity-70 text-white"
+                    >
+                      Health Score
+                    </p>
+                    <p class="text-[13px] font-bold text-white">96%</p>
+                  </div>
+                  <div class="footer-item">
+                    <p
+                      class="text-[12px] uppercase font-bold opacity-70 text-white"
+                    >
+                      Action Items
+                    </p>
+                    <p class="text-[13px] font-bold text-white">2 Alerts</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- GRAPHS ROW 1 -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+              <div
+                class="flex flex-col bg-white rounded-[24px] border border-slate-200 shadow-sm overflow-hidden group"
+              >
+                <div class="chart-header-main">
+                  <div class="chart-header-title">
+                    <i data-lucide="trending-up" class="w-4 h-4"></i>
+                    <span>Current Week Forecast</span>
+                  </div>
+                </div>
+                <div class="p-6">
+                  <div class="flex justify-between items-center mb-6">
+                    <p class="text-xs text-slate-400 font-medium"></p>
+                    <div
+                      class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl"
+                    >
+                      <button
+                        onclick="
+                          showChartTable('mainChart', 'Current Week Forecast')
+                        "
+                        class="toggle-btn"
+                        id="mainChart-table"
+                      >
+                        <i data-lucide="table" class="w-4 h-4"></i>
+                      </button>
+                      <button
+                        onclick="changeChartType('mainChart', 'bar')"
+                        class="toggle-btn"
+                        id="mainChart-bar"
+                      >
+                        <i data-lucide="bar-chart-3" class="w-4 h-4"></i>
+                      </button>
+                      <button
+                        onclick="changeChartType('mainChart', 'area')"
+                        class="toggle-btn active"
+                        id="mainChart-area"
+                      >
+                        <i data-lucide="trending-up" class="w-4 h-4"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="h-64"><canvas id="mainChart"></canvas></div>
+                </div>
+              </div>
+
+              <div
+                class="flex flex-col bg-white rounded-[24px] border border-slate-200 shadow-sm overflow-hidden group"
+              >
+                <div class="chart-header-main">
+                  <div class="chart-header-title">
+                    <i data-lucide="line-chart" class="w-4 h-4"></i>
+                    <span>Forecast Trend</span>
+                  </div>
+                </div>
+                <div class="p-6">
+                  <div class="flex justify-between items-center mb-6">
+                    <p class="text-xs text-slate-400 font-medium"></p>
+                    <div
+                      class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl"
+                    >
+                      <button
+                        onclick="showChartTable('trendChart', 'Forecast Trend')"
+                        class="toggle-btn"
+                        id="trendChart-table"
+                      >
+                        <i data-lucide="table" class="w-4 h-4"></i>
+                      </button>
+                      <button
+                        onclick="changeChartType('trendChart', 'bar')"
+                        class="toggle-btn"
+                        id="trendChart-bar"
+                      >
+                        <i data-lucide="bar-chart-3" class="w-4 h-4"></i>
+                      </button>
+                      <button
+                        onclick="changeChartType('trendChart', 'area')"
+                        class="toggle-btn active"
+                        id="trendChart-line"
+                      >
+                        <i data-lucide="trending-up" class="w-4 h-4"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="h-64"><canvas id="trendChart"></canvas></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-6">
+              <div
+                class="flex flex-col bg-white rounded-[24px] border border-slate-200 shadow-sm overflow-hidden group"
+              >
+                <div class="chart-header-main">
+                  <div class="chart-header-title">
+                    <i data-lucide="check-circle" class="w-4 h-4"></i>
+                    <span>Forecast Accuracy Index</span>
+                  </div>
+                </div>
+                <div class="p-6">
+                  <div class="flex justify-between items-center mb-6">
+                    <p class="text-xs text-slate-400 font-medium"></p>
+                    <div
+                      class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl"
+                    >
+                      <button
+                        onclick="
+                          showChartTable(
+                            'accuracyChart',
+                            'Forecast Accuracy Index',
+                          )
+                        "
+                        class="toggle-btn"
+                        id="accuracyChart-table"
+                      >
+                        <i data-lucide="table" class="w-4 h-4"></i>
+                      </button>
+                      <button
+                        onclick="changeChartType('accuracyChart', 'bar')"
+                        class="toggle-btn"
+                        id="accuracyChart-bar"
+                      >
+                        <i data-lucide="bar-chart-3" class="w-4 h-4"></i>
+                      </button>
+                      <button
+                        onclick="changeChartType('accuracyChart', 'area')"
+                        class="toggle-btn active"
+                        id="accuracyChart-area"
+                      >
+                        <i data-lucide="trending-up" class="w-4 h-4"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="h-64"><canvas id="accuracyChart"></canvas></div>
+                </div>
+              </div>
+
+              <div
+                class="flex flex-col bg-white rounded-[24px] border border-slate-200 shadow-sm overflow-hidden group"
+              >
+                <div class="chart-header-main">
+                  <div class="chart-header-title">
+                    <i data-lucide="clock" class="w-4 h-4"></i>
+                    <span>Forecasted Hours</span>
+                  </div>
+                </div>
+                <div class="p-6 flex gap-4">
+                  <div class="flex-1">
+                    <div class="flex justify-between items-center mb-6">
+                      <p class="text-xs text-slate-400 font-medium"></p>
+                      <div
+                        class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl"
+                      >
+                        <button
+                          onclick="
+                            showChartTable('hoursChart', 'Forecasted Hours')
+                          "
+                          class="toggle-btn"
+                          id="hoursChart-table"
+                        >
+                          <i data-lucide="table" class="w-4 h-4"></i>
+                        </button>
+                        <button
+                          onclick="changeChartType('hoursChart', 'bar')"
+                          class="toggle-btn active"
+                          id="hoursChart-bar"
+                        >
+                          <i data-lucide="bar-chart-3" class="w-4 h-4"></i>
+                        </button>
+                        <button
+                          onclick="changeChartType('hoursChart', 'area')"
+                          class="toggle-btn"
+                          id="hoursChart-area"
+                        >
+                          <i data-lucide="trending-up" class="w-4 h-4"></i>
+                        </button>
+                      </div>
+                    </div>
+                    <div class="h-64"><canvas id="hoursChart"></canvas></div>
+                  </div>
+                  <div
+                    class="w-48 border-l border-slate-100 pl-4 space-y-4 pt-4"
+                  >
+                    <div
+                      class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"
+                    >
+                      BY DEPARTMENT
+                    </div>
+                    <div class="space-y-4">
+                      <div>
+                        <div class="flex justify-between text-[13px] mb-1">
+                          <span>Kitchen</span
+                          ><span class="font-bold">145h</span>
+                        </div>
+                        <div class="h-1.5 w-full bg-slate-100 rounded-full">
+                          <div
+                            class="h-full bg-emerald-500 w-3/4 rounded-full"
+                          ></div>
+                        </div>
+                      </div>
+                      <div>
+                        <div class="flex justify-between text-[13px] mb-1">
+                          <span>Service</span
+                          ><span class="font-bold">210h</span>
+                        </div>
+                        <div class="h-1.5 w-full bg-slate-100 rounded-full">
+                          <div
+                            class="h-full bg-blue-500 w-full rounded-full"
+                          ></div>
+                        </div>
+                      </div>
+                      <div>
+                        <div class="flex justify-between text-[13px] mb-1">
+                          <span>Bar</span><span class="font-bold">85h</span>
+                        </div>
+                        <div class="h-1.5 w-full bg-slate-100 rounded-full">
+                          <div
+                            class="h-full bg-purple-500 w-1/2 rounded-full"
+                          ></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- VIEW: DETAIL -->
+          <div id="view-detail" class="hidden space-y-2.5 pb-10">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center justify-between w-full">
+                <div class="flex items-center gap-4">
+                  <label class="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      id="enableMyForecastToggle"
+                      class="w-4 h-4 rounded border-slate-300 cursor-pointer"
+                      onchange="toggleMyForecastRows()"
+                    />
+                    <span class="text-sm font-bold text-slate-700">Enable My Forecast</span>
+                  </label>
+                </div>
+                <select
+                  class="text-[13px] font-bold border rounded-lg px-3 py-2 bg-white outline-none"
+                >
+                  <option>Sales ($)</option>
+                  <option>Transactions</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Main Forecast Table -->
+            <div
+              class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm"
+            >
+              <table class="w-full modern-table text-left border-collapse">
+                <thead>
+                  <tr>
+                    <th class="pl-6 w-56">Forecast</th>
+                    <th>
+                      <div class="flex items-center justify-center gap-1.5">
+                        <span>MON</span>
+                        <button
+                          onclick="toggleInlineHourlyForecast('Monday')"
+                          title="View Hourly Forecast"
+                          class="p-1 hover:bg-blue-100 rounded transition-colors"
+                        >
+                          <i
+                            data-lucide="eye"
+                            class="w-3.5 h-3.5 text-blue-500"
+                          ></i>
+                        </button>
+                      </div>
+                    </th>
+                    <th>
+                      <div class="flex items-center justify-center gap-1.5">
+                        <span>TUE</span>
+                        <button
+                          onclick="toggleInlineHourlyForecast('Tuesday')"
+                          title="View Hourly Forecast"
+                          class="p-1 hover:bg-blue-100 rounded transition-colors"
+                        >
+                          <i
+                            data-lucide="eye"
+                            class="w-3.5 h-3.5 text-blue-500"
+                          ></i>
+                        </button>
+                      </div>
+                    </th>
+                    <th>
+                      <div class="flex items-center justify-center gap-1.5">
+                        <span>WED</span>
+                        <button
+                          onclick="toggleInlineHourlyForecast('Wednesday')"
+                          title="View Hourly Forecast"
+                          class="p-1 hover:bg-blue-100 rounded transition-colors"
+                        >
+                          <i
+                            data-lucide="eye"
+                            class="w-3.5 h-3.5 text-blue-500"
+                          ></i>
+                        </button>
+                      </div>
+                    </th>
+                    <th>
+                      <div class="flex items-center justify-center gap-1.5">
+                        <span>THU</span>
+                        <button
+                          onclick="toggleInlineHourlyForecast('Thursday')"
+                          title="View Hourly Forecast"
+                          class="p-1 hover:bg-blue-100 rounded transition-colors"
+                        >
+                          <i
+                            data-lucide="eye"
+                            class="w-3.5 h-3.5 text-blue-500"
+                          ></i>
+                        </button>
+                      </div>
+                    </th>
+                    <th>
+                      <div class="flex items-center justify-center gap-1.5">
+                        <span>FRI</span>
+                        <button
+                          onclick="toggleInlineHourlyForecast('Friday')"
+                          title="View Hourly Forecast"
+                          class="p-1 hover:bg-blue-100 rounded transition-colors"
+                        >
+                          <i
+                            data-lucide="eye"
+                            class="w-3.5 h-3.5 text-blue-500"
+                          ></i>
+                        </button>
+                      </div>
+                    </th>
+                    <th>
+                      <div class="flex items-center justify-center gap-1.5">
+                        <span>SAT</span>
+                        <button
+                          onclick="toggleInlineHourlyForecast('Saturday')"
+                          title="View Hourly Forecast"
+                          class="p-1 hover:bg-blue-100 rounded transition-colors"
+                        >
+                          <i
+                            data-lucide="eye"
+                            class="w-3.5 h-3.5 text-blue-500"
+                          ></i>
+                        </button>
+                      </div>
+                    </th>
+                    <th>
+                      <div class="flex items-center justify-center gap-1.5">
+                        <span>SUN</span>
+                        <button
+                          onclick="toggleInlineHourlyForecast('Sunday')"
+                          title="View Hourly Forecast"
+                          class="p-1 hover:bg-blue-100 rounded transition-colors"
+                        >
+                          <i
+                            data-lucide="eye"
+                            class="w-3.5 h-3.5 text-blue-500"
+                          ></i>
+                        </button>
+                      </div>
+                    </th>
+                    <th class="text-right pr-6">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- <tr class="bg-slate-50/50">
+                    <td class="pl-6 font-bold text-slate-500">Weather</td>
+                    <td>
+                      <div class="flex flex-col items-start pl-2">
+                        <i
+                          data-lucide="sun"
+                          class="w-5 h-5 text-amber-500 mb-1"
+                        ></i
+                        ><span class="text-[10px] font-bold text-slate-600"
+                          >74°F</span
+                        >
+                      </div>
+                    </td>
+                    <td>
+                      <div class="flex flex-col items-start pl-2">
+                        <i
+                          data-lucide="sun"
+                          class="w-5 h-5 text-amber-500 mb-1"
+                        ></i
+                        ><span class="text-[10px] font-bold text-slate-600"
+                          >76°F</span
+                        >
+                      </div>
+                    </td>
+                    <td>
+                      <div class="flex flex-col items-start pl-2">
+                        <i
+                          data-lucide="cloud-rain"
+                          class="w-5 h-5 text-blue-400 mb-1"
+                        ></i
+                        ><span class="text-[10px] font-bold text-slate-600"
+                          >68°F</span
+                        >
+                      </div>
+                    </td>
+                    <td>
+                      <div class="flex flex-col items-start pl-2">
+                        <i
+                          data-lucide="sun"
+                          class="w-5 h-5 text-amber-500 mb-1"
+                        ></i
+                        ><span class="text-[10px] font-bold text-slate-600"
+                          >75°F</span
+                        >
+                      </div>
+                    </td>
+                    <td>
+                      <div class="flex flex-col items-start pl-2">
+                        <i
+                          data-lucide="sun"
+                          class="w-5 h-5 text-amber-500 mb-1"
+                        ></i
+                        ><span class="text-[10px] font-bold text-slate-600"
+                          >78°F</span
+                        >
+                      </div>
+                    </td>
+                    <td>
+                      <div class="flex flex-col items-start pl-2">
+                        <i
+                          data-lucide="cloud"
+                          class="w-5 h-5 text-slate-400 mb-1"
+                        ></i
+                        ><span class="text-[10px] font-bold text-slate-600"
+                          >72°F</span
+                        >
+                      </div>
+                    </td>
+                    <td>
+                      <div class="flex flex-col items-start pl-2">
+                        <i
+                          data-lucide="sun"
+                          class="w-5 h-5 text-amber-500 mb-1"
+                        ></i
+                        ><span class="text-[10px] font-bold text-slate-600"
+                          >80°F</span
+                        >
+                      </div>
+                    </td>
+                    <td class="text-right pr-6 font-bold text-slate-400">—</td>
+                  </tr> -->
+                  <tr id="myForecastRow" class="hidden">
+                    <td class="pl-6 font-bold">My Forecast</td>
+                    <td>
+                      <div class="flex items-center gap-1 justify-start">
+                        <span class="text-slate-300 text-[13px]">$</span
+                        ><input
+                          type="text"
+                          value="5268"
+                          class="input-hero font-bold text-slate-800 !text-left"
+                        />
+                      </div>
+                    </td>
+                    <td>
+                      <div class="flex items-center gap-1 justify-start">
+                        <span class="text-slate-300 text-[13px]">$</span
+                        ><input
+                          type="text"
+                          value="4812"
+                          class="input-hero font-bold text-slate-800 !text-left"
+                        />
+                      </div>
+                    </td>
+                    <td>
+                      <div class="flex items-center gap-1 justify-start">
+                        <span class="text-slate-300 text-[13px]">$</span
+                        ><input
+                          type="text"
+                          value="5075"
+                          class="input-hero font-bold text-slate-800 !text-left"
+                        />
+                      </div>
+                    </td>
+                    <td>
+                      <div class="flex items-center gap-1 justify-start">
+                        <span class="text-slate-300 text-[13px]">$</span
+                        ><input
+                          type="text"
+                          value="4815"
+                          class="input-hero font-bold text-slate-800 !text-left"
+                        />
+                      </div>
+                    </td>
+                    <td>
+                      <div class="flex items-center gap-1 justify-start">
+                        <span class="text-slate-300 text-[13px]">$</span
+                        ><input
+                          type="text"
+                          value="8596"
+                          class="input-hero font-bold text-slate-800 !text-left"
+                        />
+                      </div>
+                    </td>
+                    <td>
+                      <div class="flex items-center gap-1 justify-start">
+                        <span class="text-slate-300 text-[13px]">$</span
+                        ><input
+                          type="text"
+                          value="8626"
+                          class="input-hero font-bold text-slate-800 !text-left"
+                        />
+                      </div>
+                    </td>
+                    <td>
+                      <div class="flex items-center gap-1 justify-start">
+                        <span class="text-slate-300 text-[13px]">$</span
+                        ><input
+                          type="text"
+                          value="8242"
+                          class="input-hero font-bold text-slate-800 !text-left"
+                        />
+                      </div>
+                    </td>
+                    <td
+                      class="text-right pr-6 font-black text-slate-900 text-lg"
+                    >
+                      $45,434
+                    </td>
+                  </tr>
+
+                  <tr id="increaseDecreaseRow" class="bg-slate-50/30 hidden">
+                    <td class="pl-6 font-bold">Increase/Decrease</td>
+                    <td>
+                      <div class="flex flex-col gap-1 items-start">
+                        <div class="flex items-center gap-1">
+                          <span class="text-slate-300 text-[10px]">$</span
+                          ><input
+                            type="text"
+                            value="0"
+                            class="input-hero text-[13px] py-0.5 font-normal !text-left"
+                          />
+                        </div>
+                        <div class="flex items-center gap-1">
+                          <input
+                            type="text"
+                            value="0"
+                            class="input-hero text-[10px] py-0 font-normal h-4 w-12 !text-left"
+                          />
+                          <span class="text-[10px] text-slate-400">%</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="flex flex-col gap-1 items-start">
+                        <div class="flex items-center gap-1">
+                          <span class="text-slate-300 text-[10px]">$</span
+                          ><input
+                            type="text"
+                            value="0"
+                            class="input-hero text-[13px] py-0.5 font-normal !text-left"
+                          />
+                        </div>
+                        <div class="flex items-center gap-1">
+                          <input
+                            type="text"
+                            value="0"
+                            class="input-hero text-[10px] py-0 font-normal h-4 w-12 !text-left"
+                          />
+                          <span class="text-[10px] text-slate-400">%</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="flex flex-col gap-1 items-start">
+                        <div class="flex items-center gap-1">
+                          <span class="text-slate-300 text-[10px]">$</span
+                          ><input
+                            type="text"
+                            value="0"
+                            class="input-hero text-[13px] py-0.5 font-normal !text-left"
+                          />
+                        </div>
+                        <div class="flex items-center gap-1">
+                          <input
+                            type="text"
+                            value="0"
+                            class="input-hero text-[10px] py-0 font-normal h-4 w-12 !text-left"
+                          />
+                          <span class="text-[10px] text-slate-400">%</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="flex flex-col gap-1 items-start">
+                        <div class="flex items-center gap-1">
+                          <span class="text-slate-300 text-[10px]">$</span
+                          ><input
+                            type="text"
+                            value="0"
+                            class="input-hero text-[13px] py-0.5 font-normal !text-left"
+                          />
+                        </div>
+                        <div class="flex items-center gap-1">
+                          <input
+                            type="text"
+                            value="0"
+                            class="input-hero text-[10px] py-0 font-normal h-4 w-12 !text-left"
+                          />
+                          <span class="text-[10px] text-slate-400">%</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="flex flex-col gap-1 items-start">
+                        <div class="flex items-center gap-1">
+                          <span class="text-slate-300 text-[10px]">$</span
+                          ><input
+                            type="text"
+                            value="0"
+                            class="input-hero text-[13px] py-0.5 font-normal !text-left"
+                          />
+                        </div>
+                        <div class="flex items-center gap-1">
+                          <input
+                            type="text"
+                            value="0"
+                            class="input-hero text-[10px] py-0 font-normal h-4 w-12 !text-left"
+                          />
+                          <span class="text-[10px] text-slate-400">%</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="flex flex-col gap-1 items-start">
+                        <div class="flex items-center gap-1">
+                          <span class="text-slate-300 text-[10px]">$</span
+                          ><input
+                            type="text"
+                            value="0"
+                            class="input-hero text-[13px] py-0.5 font-normal !text-left"
+                          />
+                        </div>
+                        <div class="flex items-center gap-1">
+                          <input
+                            type="text"
+                            value="0"
+                            class="input-hero text-[10px] py-0 font-normal h-4 w-12 !text-left"
+                          />
+                          <span class="text-[10px] text-slate-400">%</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="flex flex-col gap-1 items-start">
+                        <div class="flex items-center gap-1">
+                          <span class="text-slate-300 text-[10px]">$</span
+                          ><input
+                            type="text"
+                            value="0"
+                            class="input-hero text-[13px] py-0.5 font-normal !text-left"
+                          />
+                        </div>
+                        <div class="flex items-center gap-1">
+                          <input
+                            type="text"
+                            value="0"
+                            class="input-hero text-[10px] py-0 font-normal h-4 w-12 !text-left"
+                          />
+                          <span class="text-[10px] text-slate-400">%</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="text-right pr-6 font-bold">
+                      $0
+                      <div class="text-[10px] text-slate-400 font-normal">
+                        0%
+                      </div>
+                    </td>
+                  </tr>
+
+                  <tr class="bg-indigo-50/20">
+                    <td
+                      class="pl-6 font-bold text-slate-700 flex items-center justify-between relative"
+                    >
+                      <span>AI Forecast</span>
+                      <button
+                        onclick="toggleAIFactorsPopup(event)"
+                        title="View AI Factors"
+                        class="p-2 hover:bg-indigo-100 rounded transition-colors mr-2 flex items-center gap-1 cursor-pointer"
+                      >
+                        <i
+                          data-lucide="sparkles"
+                          class="w-4 h-4 text-amber-500"
+                        ></i>
+                      </button>
+                    </td>
+                    <td class="font-bold">$5,268</td>
+                    <td class="font-bold">$4,812</td>
+                    <td class="font-bold">$5,075</td>
+                    <td class="font-bold">$4,815</td>
+                    <td class="font-bold">$8,596</td>
+                    <td class="font-bold">$8,626</td>
+                    <td class="font-bold">$8,242</td>
+                    <td class="text-right pr-6 font-black text-slate-900">
+                      $45,434
+                    </td>
+                  </tr>
+
+                  <!-- AI Factors Popup -->
+                  <div
+                    id="aiFactorsPopup"
+                    class="fixed bg-white rounded-2xl shadow-xl border border-slate-200 z-50"
+                    style="width: 360px; max-height: 380px; display: none; padding: 24px;"
+                  >
+                    <div class="flex items-center gap-2.5 mb-5">
+                      <i
+                        data-lucide="sparkles"
+                        class="w-5 h-5 text-indigo-600 flex-shrink-0"
+                      ></i>
+                      <h4 class="font-bold text-slate-800 text-sm">
+                        AI Forecast - Key Factors Considered
+                      </h4>
+                    </div>
+                    <div
+                      class="grid grid-cols-2 gap-4 text-sm text-slate-700"
+                    >
+                
+                      <div class="flex items-start gap-2.5">
+                        <span
+                          class="w-2 h-2 bg-indigo-600 rounded-full mt-1.5 flex-shrink-0"
+                        ></span>
+                        <span class="text-slate-700 font-medium">Day of the Week</span>
+                      </div>
+                      <div class="flex items-start gap-2.5">
+                        <span
+                          class="w-2 h-2 bg-indigo-600 rounded-full mt-1.5 flex-shrink-0"
+                        ></span>
+                        <span class="text-slate-700 font-medium">Time of Day</span>
+                      </div>
+                      <div class="flex items-start gap-2.5">
+                        <span
+                          class="w-2 h-2 bg-indigo-600 rounded-full mt-1.5 flex-shrink-0"
+                        ></span>
+                        <span class="text-slate-700 font-medium">Weather Conditions</span>
+                      </div>
+                      <div class="flex items-start gap-2.5">
+                        <span
+                          class="w-2 h-2 bg-indigo-600 rounded-full mt-1.5 flex-shrink-0"
+                        ></span>
+                        <span class="text-slate-700 font-medium">Holidays (State & Federal)</span>
+                      </div>
+                      <div class="flex items-start gap-2.5">
+                        <span
+                          class="w-2 h-2 bg-indigo-600 rounded-full mt-1.5 flex-shrink-0"
+                        ></span>
+                        <span class="text-slate-700 font-medium">Events</span>
+                      </div>
+                      <div class="flex items-start gap-2.5">
+                        <span
+                          class="w-2 h-2 bg-indigo-600 rounded-full mt-1.5 flex-shrink-0"
+                        ></span>
+                        <span class="text-slate-700 font-medium">Marketing Campaigns</span>
+                      </div>
+                      <div class="flex items-start gap-2.5">
+                        <span
+                          class="w-2 h-2 bg-indigo-600 rounded-full mt-1.5 flex-shrink-0"
+                        ></span>
+                        <span class="text-slate-700 font-medium">Economic Conditions</span>
+                      </div>
+                      <div class="flex items-start gap-2.5">
+                        <span
+                          class="w-2 h-2 bg-indigo-600 rounded-full mt-1.5 flex-shrink-0"
+                        ></span>
+                        <span class="text-slate-700 font-medium">Sports</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <tr class="bg-indigo-50/20">
+                    <td class="pl-6 font-bold text-slate-700">
+                      Catering Sales Actual
+                    </td>
+                    <td class="font-bold">$400</td>
+                    <td class="font-bold">$1200</td>
+                    <td class="font-bold">$800</td>
+                    <td class="font-bold">$700</td>
+                    <td class="font-bold">$1,350</td>
+                    <td class="font-bold">$1,500</td>
+                    <td class="font-bold">$1,470</td>
+                    <td class="text-right pr-6 font-black text-slate-900">
+                      $7,420
+                    </td>
+                  </tr>
+
+                  <!-- <tr
+                    class="group cursor-pointer bg-slate-100/40 hover:bg-slate-100 transition-colors"
+                    onclick="toggleReferenceRows()"
+                  >
+                    <td
+                      colspan="9"
+                      class="py-2 px-6 border-y border-slate-200/60"
+                    >
+                      <div
+                        class="flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-widest"
+                      >
+                        <i
+                          data-lucide="chevron-down"
+                          id="ref-chevron"
+                          class="w-4 h-4 transition-transform duration-300 rotate-180"
+                        ></i>
+                        <span>Reference Data & History</span>
+                        <div class="h-[1px] flex-1 bg-slate-200 ml-2"></div>
+                      </div>
+                    </td>
+                  </tr>-->
+                </tbody>
+
+                <!-- <tbody id="reference-rows" class="border-t border-slate-100">
+                  <tr>
+                    <td class="pl-6 text-slate-400 font-medium">
+                      Forecast Adjustment
+                    </td>
+                    <td>0.0%</td>
+                    <td>0.0%</td>
+                    <td>0.0%</td>
+                    <td>0.0%</td>
+                    <td>0.0%</td>
+                    <td>0.0%</td>
+                    <td>0.0%</td>
+                    <td class="text-right pr-6 font-bold text-slate-900">0%</td>
+                  </tr>
+                  <tr>
+                    <td class="pl-6 text-slate-400 font-medium">
+                      Current Week Actual Sales
+                    </td>
+                    <td class="font-medium">$5,076</td>
+                    <td class="font-medium">$4,895</td>
+                    <td class="text-slate-300">—</td>
+                    <td class="text-slate-300">—</td>
+                    <td class="text-slate-300">—</td>
+                    <td class="text-slate-300">—</td>
+                    <td class="text-slate-300">—</td>
+                    <td class="text-right pr-6 font-bold text-slate-900">
+                      $9,971
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="pl-6 text-slate-400 font-medium">
+                      Last Four Week Actual Sales
+                    </td>
+                    <td class="font-medium">$4,951</td>
+                    <td class="font-medium">$4,523</td>
+                    <td class="font-medium">$4,770</td>
+                    <td class="font-medium">$4,526</td>
+                    <td class="font-medium">$8,080</td>
+                    <td class="font-medium">$8,108</td>
+                    <td class="font-medium">$7,747</td>
+                    <td class="text-right pr-6 font-bold text-slate-900">
+                      $42,705
+                    </td>
+                  </tr>
+                  <tr class="border-b-0">
+                    <td class="pl-6 font-bold text-slate-400 uppercase">
+                      Event
+                    </td>
+                    <td>
+                      <span
+                        class="px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded text-[13px] font-black uppercase"
+                        >Summer Sizzle</span
+                      >
+                    </td>
+                    <td>
+                      <span
+                        class="px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded text-[13px] font-black uppercase"
+                        >Fall Flavor Fes</span
+                      >
+                    </td>
+                    <td>
+                      <span
+                        class="px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded text-[13px] font-black uppercase"
+                        >Winter Warmers</span
+                      >
+                    </td>
+                    <td>
+                      <span
+                        class="px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded text-[13px] font-black uppercase"
+                        >Spring Bites</span
+                      >
+                    </td>
+                    <td>
+                      <span
+                        class="px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded text-[13px] font-black uppercase"
+                        >Holiday Feast</span
+                      >
+                    </td>
+                    <td>
+                      <span
+                        class="px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded text-[13px] font-black uppercase"
+                        >Game Day Eats</span
+                      >
+                    </td>
+                    <td>
+                      <span
+                        class="px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded text-[13px] font-black uppercase"
+                        >Cool Down Deals</span
+                      >
+                    </td>
+                    <td class="text-right pr-6">—</td>
+                  </tr>
+                </tbody> -->
+              </table>
+            </div>
+
+            <!-- INLINE HOURLY FORECAST SECTION -->
+            <div
+              id="inlineHourlyForecastSection"
+              class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hidden mt-2.5"
+            >
+              <div class="modal-header-pro flex items-center justify-between">
+                <div>
+                  <h3 id="inlineHourlyTitle" class="text-lg font-bold">
+                    Monday - Hourly Forecast
+                  </h3>
+                </div>
+                <button
+                  onclick="closeInlineHourlyForecast()"
+                  class="transition-colors"
+                >
+                  <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+              </div>
+
+              <div class="bg-white">
+                <div
+                  class="px-6 py-4 flex items-center justify-between bg-slate-50/50 border-b"
+                >
+                  <div class="flex items-center gap-2">
+                    <div
+                      class="flex bg-slate-200/50 p-1 rounded-lg text-[13px] font-bold"
+                    >
+                      <button
+                        onclick="setInlineHourlyInterval('hourly')"
+                        id="inline-int-hourly"
+                        class="px-4 py-1.5 rounded-md transition-all bg-white text-indigo-600 shadow-sm"
+                      >
+                        Hourly
+                      </button>
+                      <button
+                        onclick="setInlineHourlyInterval('15min')"
+                        id="inline-int-15min"
+                        class="px-4 py-1.5 rounded-md transition-all text-slate-500 hover:text-slate-800"
+                      >
+                        15 Min
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="hourly-table-container h-96">
+                  <table
+                    class="w-full modern-table border-collapse text-[13px]"
+                  >
+                    <thead class="sticky top-0 z-10">
+                      <tr>
+                        <th class="pl-6 bg-[#f8fafc] text-left">Time</th>
+                        <th
+                          id="inlineDayHeader"
+                          class="text-center bg-[#f8fafc]"
+                        >
+                          Sales $
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody id="inlineHourlyTableBody">
+                      <!-- Dynamic content will be inserted here -->
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div
+                class="bg-slate-50 px-6 py-4 flex justify-end gap-3 border-t border-slate-200"
+              >
+                <button
+                  onclick="closeInlineHourlyForecast()"
+                  class="px-6 py-2 text-sm font-bold text-slate-700 hover:bg-slate-200 rounded-lg transition-colors"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+
+            <!-- HOURLY FORECAST SECTION (Accordion) -->
+            <div>
+              <button
+                onclick="toggleHourlySection()"
+                class="w-full flex items-center justify-between p-6 hover:bg-slate-50 transition-colors"
+              >
+                <!--<div class="flex items-center gap-2">
+                  <i data-lucide="clock" class="w-5 h-5 text-indigo-500"></i>
+                  <h3 class="font-extrabold text-slate-800">Hourly Forecast</h3>
+                </div> -->
+                <!-- <i
+                  data-lucide="chevron-down"
+                  id="hourly-chevron"
+                  class="w-5 h-5 text-slate-400 transition-transform"
+                ></i> -->
+              </button>
+
+              <!-- <div id="hourly-content" class="hidden">
+                <div
+                  class="px-6 py-4 flex items-center justify-between bg-slate-50/50 border-t"
+                >
+                  <div class="flex items-center gap-2">
+                    <div
+                      class="flex bg-slate-200/50 p-1 rounded-lg text-[13px] font-bold"
+                    >
+                      <button
+                        onclick="setHourlyInterval('hourly')"
+                        id="int-hourly"
+                        class="px-4 py-1.5 rounded-md transition-all bg-white text-indigo-600 shadow-sm"
+                      >
+                        Hourly
+                      </button>
+                      <button
+                        onclick="setHourlyInterval('15min')"
+                        id="int-15min"
+                        class="px-4 py-1.5 rounded-md transition-all text-slate-500 hover:text-slate-800"
+                      >
+                        15 Min
+                      </button>
+                    </div>
+                  </div>
+                  <button
+                    class="bg-emerald-500 text-white px-5 py-2 rounded-lg text-[13px] font-bold shadow-lg shadow-emerald-100 flex items-center gap-2 hover:bg-emerald-600"
+                  >
+                    <i data-lucide="save" class="w-3.5 h-3.5"></i> Update
+                  </button>
+                </div>
+
+                <div class="hourly-table-container">
+                  <table
+                    class="w-full modern-table border-collapse text-[13px]"
+                  >
+                    <thead class="sticky top-0 z-10">
+                      <tr>
+                        <th class="pl-6 sticky left-0 bg-[#f8fafc] z-20">
+                          Time
+                        </th>
+                        <th>MON</th>
+                        <th>TUE</th>
+                        <th>WED</th>
+                        <th>THU</th>
+                        <th>FRI</th>
+                        <th>SAT</th>
+                        <th>SUN</th>
+                        <th class="text-right pr-6">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody id="hourly-table-body">
+                    </tbody>
+                  </table>
+                </div>
+              </div> -->
+            </div>
+          </div>
+
+          <!-- HOURLY FORECAST MODAL FOR SPECIFIC DAY -->
+          <div
+            id="hourlyForecastModal"
+            class="modal-backdrop"
+            onclick="closeHourlyForecastModal()"
+          >
+            <div
+              class="modal-content !max-w-lg !p-0 overflow-hidden !rounded-[20px]"
+              onclick="event.stopPropagation()"
+            >
+              <div class="modal-header-pro flex items-center justify-between">
+                <div>
+                  <h3 id="dailyHourlyTitle" class="text-lg font-bold">
+                    Monday - Hourly Forecast
+                  </h3>
+                </div>
+                <button
+                  onclick="closeHourlyForecastModal()"
+                  class="transition-colors"
+                >
+                  <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+              </div>
+
+              <div class="bg-white">
+                <div
+                  class="px-6 py-4 flex items-center justify-between bg-slate-50/50 border-b"
+                >
+                  <div class="flex items-center gap-2">
+                    <div
+                      class="flex bg-slate-200/50 p-1 rounded-lg text-[13px] font-bold"
+                    >
+                      <button
+                        onclick="setDailyHourlyInterval('hourly')"
+                        id="daily-int-hourly"
+                        class="px-4 py-1.5 rounded-md transition-all bg-white text-indigo-600 shadow-sm"
+                      >
+                        Hourly
+                      </button>
+                      <button
+                        onclick="setDailyHourlyInterval('15min')"
+                        id="daily-int-15min"
+                        class="px-4 py-1.5 rounded-md transition-all text-slate-500 hover:text-slate-800"
+                      >
+                        15 Min
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="hourly-table-container h-96">
+                  <table
+                    class="w-full modern-table border-collapse text-[13px]"
+                  >
+                    <thead class="sticky top-0 z-10">
+                      <tr>
+                        <th class="pl-6 bg-[#f8fafc] text-left">Time</th>
+                        <th
+                          id="dailyDayHeader"
+                          class="text-center bg-[#f8fafc]"
+                        >
+                          Sales $
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody id="dailyHourlyTableBody">
+                      <!-- Dynamic content will be inserted here -->
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div
+                class="bg-slate-50 px-6 py-4 flex justify-end gap-3 border-t border-slate-200"
+              >
+                <button
+                  onclick="closeHourlyForecastModal()"
+                  class="px-6 py-2 text-sm font-bold text-slate-700 hover:bg-slate-200 rounded-lg transition-colors"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div id="view-catering" class="hidden space-y-4">
+            <div class="flex justify-between items-center px-2">
+              <h2 class="text-xl font-extrabold text-slate-800 tracking-tight">
+                Catering Management
+              </h2>
+              <button
+                onclick="openCateringModal()"
+                class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-lg shadow-indigo-100 flex items-center gap-2 transition-all active:scale-95"
+              >
+                <i data-lucide="plus-circle" class="w-4 h-4"></i> Add Catering
+                Sales
+              </button>
+            </div>
+
+            <div
+              class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden"
+            >
+              <div
+                class="p-5 border-b border-slate-100 flex items-center gap-2"
+              >
+                <div class="w-1 h-5 bg-indigo-500 rounded-full"></div>
+                <h3 class="font-bold text-slate-700">
+                  Scheduled Catering Sales
+                </h3>
+              </div>
+              <div class="overflow-x-auto">
+                <table class="w-full modern-table text-left border-collapse">
+                  <thead>
+                    <tr class="bg-slate-50/50">
+                      <th class="pl-6 py-4 font-bold text-slate-700 text-xs uppercase tracking-widest border-right border-slate-200">Date and Time</th>
+                      <th class="px-4 py-4 font-bold text-slate-700 text-xs uppercase tracking-widest border-right border-slate-200">Name</th>
+                      <th class="px-4 py-4 font-bold text-slate-700 text-xs uppercase tracking-widest border-right border-slate-200">Email</th>
+                      <th class="px-4 py-4 font-bold text-slate-700 text-xs uppercase tracking-widest border-right border-slate-200">Mobile Number</th>
+                      <th class="px-4 py-4 font-bold text-slate-700 text-xs uppercase tracking-widest border-right border-slate-200">Amount</th>
+                      <th class="text-right pr-6 py-4 font-bold text-slate-700 text-xs uppercase tracking-widest">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody
+                    id="catering-table-body"
+                    class="divide-y divide-slate-50"
+                  ></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div
+            id="cateringModal"
+            class="modal-backdrop"
+            onclick="toggleCateringModal(false)"
+          >
+            <div
+              class="modal-content !max-w-2xl !p-0 overflow-hidden !rounded-xl border-none shadow-2xl"
+              onclick="event.stopPropagation()"
+            >
+              <div class="modal-pro-header">
+                <div class="flex items-center gap-3">
+                  <div class="modal-avatar-badge" style="background: #e11d48">
+                    AC
+                  </div>
+                  <span
+                    id="modal-heading"
+                    class="font-bold text-slate-700 text-[13px]"
+                    >Add Catering</span
+                  >
+                </div>
+                <button
+                  onclick="toggleCateringModal(false)"
+                  class="text-slate-400 hover:text-rose-500 transition-colors"
+                >
+                  <i data-lucide="x-circle" class="w-5 h-5"></i>
+                </button>
+              </div>
+
+              <div
+                id="toast-container"
+                class="fixed top-5 right-[-300px] z-[9999] transition-all duration-500"
+              >
+                <div
+                  class="bg-rose-600 text-white px-6 py-3 rounded-lg shadow-2xl font-bold flex items-center gap-3"
+                >
+                  <i data-lucide="alert-circle" class="w-5 h-5"></i>
+                  <span id="toast-msg">Mandatory fields required!</span>
+                </div>
+              </div>
+
+              <div class="modal-body-wrapper !pt-0 !pb-6">
+                <form id="cateringForm">
+                  <input type="hidden" id="edit-index" />
+
+                  <div class="flex justify-end mb-2 mt-[-10px]">
+                    <div class="w-[150px]">
+                      <div class="flex justify-between items-center h-4">
+                        <label
+                          class="text-[10px] font-bold text-slate-400 uppercase tracking-tight"
+                          >Est. Start Time</label
+                        >
+                        <input
+                          type="text"
+                          id="cat-est-start"
+                          readonly
+                          class="text-[11px] font-extrabold text-slate-800 bg-transparent border-none p-0 outline-none w-12 text-right cursor-default"
+                          placeholder="--:--"
+                        />
+                      </div>
+                      <div class="flex justify-between items-center h-4 mt-1">
+                        <label
+                          class="text-[10px] font-bold text-slate-400 uppercase tracking-tight"
+                          >Est. End Time</label
+                        >
+                        <input
+                          type="text"
+                          id="cat-est-end"
+                          readonly
+                          class="text-[11px] font-extrabold text-slate-800 bg-transparent border-none p-0 outline-none w-12 text-right cursor-default"
+                          placeholder="--:--"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div
+                    class="grid grid-cols-2 gap-x-8 gap-y-4"
+                    style="margin-top: -18px"
+                  >
+                    <div class="field-group">
+                      <label
+                        class="block text-[10px] font-bold text-slate-500 uppercase mb-1.5"
+                        >Date <span class="text-rose-500">*</span></label
+                      >
+                      <input
+                        type="date"
+                        id="cat-date"
+                        class="input-field-pro"
+                      />
+                    </div>
+
+                    <div class="field-group">
+                      <label
+                        class="block text-[10px] font-bold text-slate-500 uppercase mb-1.5"
+                        >Time <span class="text-rose-500">*</span></label
+                      >
+                      <input
+                        type="time"
+                        id="cat-time"
+                        class="input-field-pro"
+                      />
+                    </div>
+
+                    <div class="field-group">
+                      <label
+                        class="block text-[10px] font-bold text-slate-500 uppercase mb-1.5"
+                        >Name <span class="text-rose-500">*</span></label
+                      >
+                      <input
+                        type="text"
+                        id="cat-name"
+                        class="input-field-pro"
+                      />
+                    </div>
+
+                    <div class="field-group">
+                      <label
+                        class="block text-[10px] font-bold text-slate-500 uppercase mb-1.5"
+                        >Email</label
+                      >
+                      <input
+                        type="email"
+                        id="cat-email"
+                        class="input-field-pro"
+                      />
+                    </div>
+
+                    <div class="field-group">
+                      <label
+                        class="block text-[10px] font-bold text-slate-500 uppercase mb-1.5"
+                        >Mobile Number</label
+                      >
+                      <input
+                        type="tel"
+                        id="cat-mobile"
+                        class="input-field-pro"
+                      />
+                    </div>
+
+                    <div class="field-group">
+                      <label
+                        class="block text-[10px] font-bold text-slate-500 uppercase mb-1.5"
+                        >Amount ($) <span class="text-rose-500">*</span></label
+                      >
+                      <input
+                        type="number"
+                        step="0.01"
+                        id="cat-amount"
+                        class="input-field-pro font-bold text-blue-600"
+                      />
+                    </div>
+                  </div>
+
+                  <div
+                    class="modal-footer-actions !mt-6 !pt-4 border-t border-slate-100"
+                  >
+                    <button
+                      type="button"
+                      onclick="toggleCateringModal(false)"
+                      class="px-5 py-2 text-sm font-bold text-slate-400 hover:text-slate-600 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      id="cat-submit-btn"
+                      class="bg-blue-600 text-white px-8 py-2.5 rounded-full text-sm font-bold shadow-md hover:bg-blue-700 transition-all active:scale-95 flex items-center gap-2"
+                    >
+                      <i
+                        data-lucide="plus"
+                        id="cat-btn-icon"
+                        class="w-4 h-4"
+                      ></i>
+                      <span id="cat-btn-text">Add</span>
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- UNIVERSAL CHART MODAL -->
+    <div id="chartModal" class="modal-backdrop" onclick="closeModal()">
+      <div
+        class="modal-content !max-w-2xl !p-6 !rounded-[20px]"
+        onclick="event.stopPropagation()"
+      >
+        <div class="flex justify-between items-start mb-6">
+          <div>
+            <h3 class="text-xl font-extrabold text-slate-900" id="modalTitle">
+              Data View
+            </h3>
+            <p class="text-[13px] text-slate-500 mt-1" id="modalSubtitle">
+              Cost impact and performance metrics
+            </p>
+          </div>
+          <div
+            id="modalOptions"
+            class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200"
+          >
+            <button
+              onclick="updateModalView('bar')"
+              id="m-bar"
+              class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-bold transition-all"
+            >
+              <i data-lucide="bar-chart-2" class="w-3.5 h-3.5"></i> Bar
+            </button>
+            <button
+              onclick="updateModalView('line')"
+              id="m-line"
+              class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-bold transition-all"
+            >
+              <i data-lucide="trending-up" class="w-3.5 h-3.5"></i> Trend
+            </button>
+            <button
+              onclick="updateModalView('table')"
+              id="m-table"
+              class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-bold transition-all"
+            >
+              <i data-lucide="table" class="w-3.5 h-3.5"></i> Table
+            </button>
+          </div>
+          <button
+            onclick="closeModal()"
+            class="text-slate-400 hover:text-rose-500 transition-colors -mt-1"
+          >
+            <i data-lucide="x" class="w-6 h-6"></i>
+          </button>
+        </div>
+
+        <div id="modalGraphContainer" class="h-72 w-full">
+          <canvas id="modalChart"></canvas>
+        </div>
+
+        <div
+          id="modalTableContainer"
+          class="hidden h-72 overflow-y-auto border border-slate-100 rounded-xl"
+        >
+          <table class="w-full text-sm text-left border-collapse">
+            <thead class="bg-slate-50 sticky top-0 border-b border-slate-100">
+              <tr>
+                <th
+                  class="p-3 text-slate-500 font-bold uppercase text-[10px] tracking-wider"
+                >
+                  Day
+                </th>
+                <th
+                  class="p-3 text-slate-500 font-bold uppercase text-[10px] tracking-wider text-right"
+                >
+                  Value
+                </th>
+                <th
+                  class="p-3 text-slate-500 font-bold uppercase text-[10px] tracking-wider text-center"
+                >
+                  Status
+                </th>
+              </tr>
+            </thead>
+            <tbody id="modalTableBody" class="divide-y divide-slate-50"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <script>
+      lucide.createIcons();
+
+      const tileDataMap = {
+        "Actual Sales": {
+          labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+          data: [5076, 4895, 3495, 6391, 1812, 8833, 4890],
+          color: "#3b82f6",
+          prefix: "$",
+          subtitle: "Actual recorded revenue for the current week",
+        },
+        "Forecasted Sales": {
+          labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+          data: [5268, 4812, 5075, 4815, 8596, 8626, 8242],
+          color: "#f59e0b",
+          prefix: "$",
+          subtitle: "Base system projections before adjustments",
+        },
+        "Adj Forecast Sales": {
+          labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+          data: [5300, 4850, 5100, 4850, 8600, 8650, 8250],
+          color: "#10b981",
+          prefix: "$",
+          subtitle: "Manager-adjusted sales targets",
+        },
+        "Actual Trans": {
+          labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+          data: [195, 198, 242, 210, 230, 250, 220],
+          color: "#6366f1",
+          prefix: "",
+          subtitle: "Total transaction count recorded",
+        },
+        "Forecasted Trans": {
+          labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+          data: [210, 195, 205, 190, 340, 350, 324],
+          color: "#06b6d4",
+          prefix: "",
+          subtitle: "Projected transaction volume",
+        },
+        "Adj Forecast Trans": {
+          labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+          data: [215, 200, 210, 195, 345, 355, 330],
+          color: "#ec4899",
+          prefix: "",
+          subtitle: "Adjusted customer traffic expectations",
+        },
+      };
+
+      let currentModalContext = null;
+      let currentModalChart = null;
+
+      // Chart Configuration & State
+      const chartData = {
+        mainChart: {
+          labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+          datasets: [
+            // 🔵 ACTUAL — stops at today
+            {
+              label: "Actual",
+              data: [5100, 4900, 3500, 6000, 4700, 4250, 5500],
+              borderColor: "#60a5fa",
+              backgroundColor: "rgba(96,165,250,0.18)",
+              borderWidth: 2,
+              tension: 0.45,
+              fill: true,
+              pointRadius: 3,
+              order: 3,
+            },
+
+            // 🟢 SYSTEM FORECAST — base projection
+            {
+              label: "AI Forecast",
+              data: [5300, 4850, 5100, 4850, 8600, 8650, 8250],
+              borderColor: "#34d399",
+              backgroundColor: "rgba(52,211,153,0.26)",
+              borderWidth: 2,
+              tension: 0.45,
+              fill: true,
+              pointRadius: 0,
+              order: 1,
+            },
+
+            // 🟠 MANAGER ADJ — slightly different
+            {
+              label: "Manager Adj.",
+              data: [1000, 4000, 8000, 12000, 6000, 3500, 6500],
+              borderColor: "#fb923c",
+              backgroundColor: "rgba(251,146,60,0.12)",
+              borderWidth: 2,
+              tension: 0.45,
+              fill: false,
+              pointRadius: 3,
+              order: 2,
+            },
+          ],
+        },
+        trendChart: {
+          labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+
+          datasets: [
+            // 🔷 CURRENT TREND — Main (Calm Blue Area)
+            {
+              label: "Current Week",
+              data: [6000, 5500, 6500, 7500, 9500, 10000, 10500],
+              borderColor: "#3b82f6",
+              backgroundColor: "rgba(59,130,246,0.18)",
+              borderWidth: 3,
+              tension: 0.45,
+              fill: true,
+              pointRadius: 3,
+              pointHoverRadius: 5,
+              order: 2,
+            },
+
+            // 🌿 PREVIOUS TREND — Comparison (Soft Green Dashed Line)
+            {
+              label: "Previous Week",
+              data: [5000, 4950, 4850, 4700, 8200, 8300, 8100],
+              borderColor: "#10b981",
+              backgroundColor: "rgba(16,185,129,0.10)",
+              borderWidth: 2,
+              borderDash: [6, 5],
+              tension: 0.45,
+              fill: false,
+              pointRadius: 2,
+              pointHoverRadius: 5,
+              order: 1,
+            },
+          ],
+        },
+        accuracyChart: {
+          labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+
+          datasets: [
+            // 🟢 ACTUAL ACCURACY — Main Area
+            {
+              label: "Forecast Accuracy %",
+              data: [97, 96, 95, 94, 98, 99, 97],
+              borderColor: "#22c55e",
+              backgroundColor: "rgba(34,197,94,0.18)",
+              borderWidth: 3,
+              tension: 0.4,
+              fill: true,
+              pointRadius: 3,
+              pointHoverRadius: 5,
+              order: 2,
+            },
+
+            // 🟣 TARGET ACCURACY — Benchmark Line
+          ],
+        },
+        hoursChart: {
+          labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+
+          datasets: [
+            // 🔵 FORECASTED HOURS — Main Area
+            {
+              label: "Forecasted Hours",
+              data: [155, 105, 80, 80, 120, 110, 108],
+              borderColor: "#3b82f6",
+              backgroundColor: "rgba(59,130,246,0.18)",
+              borderWidth: 3,
+              tension: 0.4,
+              fill: true,
+              pointRadius: 3,
+              pointHoverRadius: 5,
+              order: 2,
+            },
+
+            // 🟠 SCHEDULED HOURS — Comparison
+            {
+              label: "Scheduled Hours",
+              data: [82, 78, 80, 79, 138, 145, 130],
+              borderColor: "#f59e0b",
+              backgroundColor: "transparent",
+              borderWidth: 2,
+              borderDash: [6, 5],
+              tension: 0.4,
+              fill: false,
+              pointRadius: 2,
+              pointHoverRadius: 5,
+              order: 1,
+            },
+          ],
+        },
+      };
+
+      let charts = {};
+      let modalChartInstance = null;
+
+      function renderChart(id, type = "bar") {
+        const ctx = document.getElementById(id).getContext("2d");
+        if (charts[id]) charts[id].destroy();
+
+        const configType = type === "area" ? "line" : type;
+        const data = JSON.parse(JSON.stringify(chartData[id]));
+
+        if (configType === "bar") {
+          data.datasets.forEach((ds) => {
+            ds.backgroundColor = ds.borderColor; // solid fill
+            ds.borderWidth = 0; // remove outline
+            ds.borderRadius = 6; // modern rounded bars
+            ds.barThickness = 18; // nice width
+          });
+        }
+
+        if (type === "area") {
+          data.datasets.forEach((ds) => (ds.fill = true));
+        } else if (type === "line") {
+          data.datasets.forEach((ds) => (ds.fill = false));
+        }
+
+        charts[id] = new Chart(ctx, {
+          type: configType,
+          data: data,
+          options: {
+            maintainAspectRatio: false,
+
+            plugins: {
+              legend: {
+                position: "bottom",
+                labels: {
+                  usePointStyle: true,
+                  boxWidth: 8,
+                  padding: 18,
+                  font: { weight: 600 },
+                },
+              },
+            },
+
+            scales: {
+              y: {
+                beginAtZero: true,
+                grid: {
+                  color: "rgba(0,0,0,0.06)",
+                  drawBorder: false,
+                },
+                ticks: {
+                  padding: 8,
+                  color: "#64748b",
+                },
+              },
+              x: {
+                grid: { display: false },
+                ticks: {
+                  padding: 6,
+                  color: "#64748b",
+                },
+              },
+            },
+
+            interaction: {
+              mode: "index",
+              intersect: false,
+            },
+
+            animation: {
+              duration: 500,
+            },
+          },
+        });
+      }
+
+      function changeChartType(id, type) {
+        renderChart(id, type);
+        ["line", "bar", "area"].forEach((t) =>
+          document.getElementById(`${id}-${t}`)?.classList.remove("active"),
+        );
+        document.getElementById(`${id}-${type}`)?.classList.add("active");
+      }
+
+      function maximizeChart(id, title) {
+        if (modalChartInstance) modalChartInstance.destroy();
+        currentModalContext = null; // Clear context to avoid TypeError in render functions
+
+        document.getElementById("modalTitle").innerText = title;
+        document.getElementById("modalSubtitle").innerText = "";
+        document.getElementById("chartModal").classList.add("active");
+        document
+          .getElementById("modalGraphContainer")
+          .classList.remove("hidden");
+        document.getElementById("modalTableContainer").classList.add("hidden");
+
+        const ctx = document.getElementById("modalChart").getContext("2d");
+        const source = charts[id];
+
+        // Create a clean copy of the data
+        modalChartInstance = new Chart(ctx, {
+          type: source.config.type,
+          data: JSON.parse(JSON.stringify(source.data)),
+          options: {
+            maintainAspectRatio: false,
+            plugins: { legend: { display: true, position: "bottom" } },
+          },
+        });
+      }
+
+      // FIXED: This now ensures the buttons reappear when clicking on a KPI tile
+      function openModal(title) {
+        // Reset state and destroy previous instance
+        if (modalChartInstance) modalChartInstance.destroy();
+
+        currentModalContext = tileDataMap[title];
+        if (!currentModalContext) return;
+
+        document.getElementById("modalOptions").style.display = "flex";
+        document
+          .getElementById("modalGraphContainer")
+          .classList.remove("hidden");
+        document.getElementById("modalTableContainer").classList.add("hidden");
+        document.getElementById("modalTitle").innerText = title;
+        document.getElementById("modalSubtitle").innerText =
+          currentModalContext.subtitle;
+        document.getElementById("chartModal").classList.add("active");
+
+        updateModalView("bar");
+        lucide.createIcons();
+      }
+
+      // FIXED: This helper now ensures the options are hidden for specific graph tables
+      function showChartTable(id, title) {
+        // Clear tile context so it doesn't conflict
+        currentModalContext = null;
+
+        maximizeChart(id, title);
+
+        // HIDE the options because these custom tables are fixed-format
+        document.getElementById("modalOptions").style.display = "none";
+
+        updateModalView("table");
+      }
+
+      function updateModalView(viewType) {
+        const graphCont = document.getElementById("modalGraphContainer");
+        const tableCont = document.getElementById("modalTableContainer");
+
+        // Toggle Button Styles
+        ["bar", "line", "table"].forEach((v) => {
+          const btn = document.getElementById(`m-${v}`);
+          if (v === viewType) {
+            btn.className =
+              "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-bold bg-blue-600 text-white shadow-md shadow-blue-200";
+          } else {
+            btn.className =
+              "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-bold text-slate-500 hover:text-slate-800 bg-transparent";
+          }
+        });
+
+        if (viewType === "table") {
+          graphCont.classList.add("hidden");
+          tableCont.classList.remove("hidden");
+          renderModalTable();
+        } else {
+          graphCont.classList.remove("hidden");
+          tableCont.classList.add("hidden");
+          renderModalChart(viewType);
+        }
+      }
+
+      function renderModalChart(type) {
+        // FIX: Prevent TypeError if called without a KPI tile context
+        if (!currentModalContext) return;
+
+        const ctx = document.getElementById("modalChart").getContext("2d");
+        if (modalChartInstance) modalChartInstance.destroy();
+
+        const isLine = type === "line";
+
+        modalChartInstance = new Chart(ctx, {
+          type: isLine ? "line" : "bar",
+          data: {
+            labels: currentModalContext.labels,
+            datasets: [
+              {
+                label: "Value",
+                data: currentModalContext.data,
+                backgroundColor: isLine
+                    ? `${currentModalContext.color}20`
+                    : currentModalContext.color,
+                borderColor: currentModalContext.color,
+                borderWidth: isLine ? 3 : 0,
+                fill: isLine,
+                tension: 0.4,
+                borderRadius: 6,
+              },
+            ],
+          },
+          options: {
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true }, x: { grid: { display: false } } },
+          },
+        });
+      }
+
+      function renderModalTable() {
+        const tbody = document.getElementById("modalTableBody");
+        const thead = document.querySelector("#modalTableContainer thead tr");
+
+        // 1. Handle KPI Tiles (Simple 2-column view: Day and Value)
+        if (currentModalContext) {
+          // Set headers: Removed Status column
+          thead.innerHTML = `
+      <th class="p-3 text-slate-500 font-bold uppercase text-[10px] tracking-wider text-center">Day</th>
+      <th class="p-3 text-slate-500 font-bold uppercase text-[10px] tracking-wider text-center">Value</th>
+    `;
+
+          tbody.innerHTML = currentModalContext.labels
+            .map((label, i) => {
+              const val = currentModalContext.data[i] || 0;
+              return `
+        <tr class="hover:bg-slate-50/50 transition-colors">
+          <td class="p-3 text-slate-700 text-center font-normal">${label}</td>
+          <td class="p-3 font-mono text-slate-900 text-center font-normal">
+            ${currentModalContext.prefix}${val.toLocaleString()}
+          </td>
+        </tr>`;
+            })
+            .join("");
+          return;
+        }
+
+        // 2. Handle Charts (Multi-column view for the 4 main graphs)
+        if (!modalChartInstance) return;
+
+        const labels = modalChartInstance.data.labels;
+        const datasets = modalChartInstance.data.datasets;
+
+        // Headers: Bold and Centered based on datasets
+        let headerHtml = `<th class="p-3 text-slate-500 font-bold uppercase text-[10px] tracking-wider text-center">Day</th>`;
+        datasets.forEach((ds) => {
+          headerHtml += `<th class="p-3 text-slate-500 font-bold uppercase text-[10px] tracking-wider text-center">${ds.label}</th>`;
+        });
+        thead.innerHTML = headerHtml;
+
+        // Rows: Center aligned, Normal weight
+        tbody.innerHTML = labels
+          .map((label, i) => {
+            let rowHtml = `<tr class="hover:bg-slate-50/50 transition-colors">
+                    <td class="p-3 text-slate-700 text-center font-normal">${label}</td>`;
+
+            datasets.forEach((ds) => {
+              const val = ds.data[i];
+              const displayVal =
+                val === null || val === undefined ? "—" : val.toLocaleString();
+              const isPercent = ds.label.includes("%") ? "%" : "";
+
+              const modalTitle =
+                document.getElementById("modalTitle").innerText;
+              const isMoney =
+                (modalTitle.includes("Sales") ||
+                  modalTitle.includes("Forecast")) &&
+                !isPercent &&
+                !modalTitle.includes("Hours") &&
+                !modalTitle.includes("Accuracy")
+                  ? "$"
+                  : "";
+
+              rowHtml += `<td class="p-3 font-mono text-slate-900 text-center font-normal">${isMoney}${displayVal}${isPercent}</td>`;
+            });
+
+            rowHtml += `</tr>`;
+            return rowHtml;
+          })
+          .join("");
+      }
+
+      function closeModal() {
+        document.getElementById("chartModal").classList.remove("active");
+
+        // Optional: Destroy on close to ensure a clean slate for the next open
+        if (modalChartInstance) {
+          modalChartInstance.destroy();
+          modalChartInstance = null;
+        }
+      }
+
+      function switchTab(view) {
+        // 1. Toggle View Visibility
+        document
+          .getElementById("view-dashboard")
+          .classList.toggle("hidden", view !== "dashboard");
+        document
+          .getElementById("view-detail")
+          .classList.toggle("hidden", view !== "detail");
+        document
+          .getElementById("view-catering")
+          .classList.toggle("hidden", view !== "catering");
+
+        // 2. Hide/Show the Local Header (Dashboard/Forecast Detail + Date Picker)
+        // We hide it if we are in 'catering', show it otherwise
+        const localHeader = document.getElementById("local-header");
+        if (view === "catering") {
+          localHeader.classList.add("hidden");
+        } else {
+          localHeader.classList.remove("hidden");
+        }
+
+        // 2.5. Update Tab Button Highlighting
+        const btnDash = document.getElementById("btn-dash");
+        const btnDetail = document.getElementById("btn-detail");
+
+        if (view === "dashboard") {
+          btnDash.classList.add("bg-white", "text-indigo-600", "shadow-sm");
+          btnDash.classList.remove("text-slate-500", "hover:text-slate-800");
+          btnDetail.classList.remove(
+            "bg-white",
+            "text-indigo-600",
+            "shadow-sm",
+          );
+          btnDetail.classList.add("text-slate-500", "hover:text-slate-800");
+        } else if (view === "detail") {
+          btnDash.classList.remove("bg-white", "text-indigo-600", "shadow-sm");
+          btnDash.classList.add("text-slate-500", "hover:text-slate-800");
+          btnDetail.classList.add("bg-white", "text-indigo-600", "shadow-sm");
+          btnDetail.classList.remove("text-slate-500", "hover:text-slate-800");
+        }
+
+        // 3. Update Sidebar Active State
+        const menuItems = document.querySelectorAll(".sidebar .menu-item");
+        menuItems.forEach((item) => item.classList.remove("active"));
+
+        if (view === "dashboard") {
+          document.getElementById("side-dash").classList.add("active");
+          document.getElementById("side-fore").classList.remove("active"); // Ensure Forecast is inactive
+        } else if (view === "detail") {
+          document.getElementById("side-fore").classList.add("active");
+          document.getElementById("side-dash").classList.remove("active");
+        } else if (view === "catering") {
+          document.getElementById("side-catering").classList.add("active");
+          renderCateringTable();
+        }
+
+        // Re-run Lucide to render icons
+        lucide.createIcons();
+      }
+
+      let isHourlyExpanded = false;
+      let hourlyInterval = "hourly";
+      function toggleHourlySection() {
+        isHourlyExpanded = !isHourlyExpanded;
+        const content = document.getElementById("hourly-content");
+        const chevron = document.getElementById("hourly-chevron");
+        content.classList.toggle("hidden", !isHourlyExpanded);
+        chevron.style.transform = isHourlyExpanded
+          ? "rotate(180deg)"
+          : "rotate(0deg)";
+        if (isHourlyExpanded) renderHourlyTable();
+      }
+
+      function setHourlyInterval(val) {
+        hourlyInterval = val;
+        document.getElementById("int-hourly").className =
+          val === "hourly"
+            ? "px-4 py-1.5 rounded-md transition-all bg-white text-indigo-600 shadow-sm"
+            : "px-4 py-1.5 rounded-md transition-all text-slate-500 hover:text-slate-800";
+        document.getElementById("int-15min").className =
+          val === "15min"
+            ? "px-4 py-1.5 rounded-md transition-all bg-white text-indigo-600 shadow-sm"
+            : "px-4 py-1.5 rounded-md transition-all text-slate-500 hover:text-slate-800";
+        renderHourlyTable();
+      }
+
+      function renderHourlyTable() {
+        const body = document.getElementById("hourly-table-body");
+        const head = document.querySelector(".hourly-table-container thead tr");
+
+        head.innerHTML = `
+        <th class="pl-6 sticky left-0 bg-[#f8fafc] z-20 text-left">Time</th>
+        <th class="text-center">MON</th>
+        <th class="text-center">TUE</th>
+        <th class="text-center">WED</th>
+        <th class="text-center">THU</th>
+        <th class="text-center">FRI</th>
+        <th class="text-center">SAT</th>
+        <th class="text-center">SUN</th>
+        <th class="text-center pr-6">Total</th>
+    `;
+
+        body.innerHTML = "";
+        const step = hourlyInterval === "hourly" ? 60 : 15;
+        const totalMinutes = 24 * 60;
+        let startTime = 240; // 4:00 AM
+
+        for (let i = 0; i < totalMinutes; i += step) {
+          const currentMins = (startTime + i) % (24 * 60);
+          const hour = Math.floor(currentMins / 60);
+          const mins = currentMins % 60;
+          const ampm = hour >= 12 ? "PM" : "AM";
+          const displayHour = hour % 12 === 0 ? 12 : hour % 12;
+          const timeStr = `${displayHour}:${mins.toString().padStart(2, "0")} ${ampm}`;
+
+          const row = document.createElement("tr");
+          row.className = i % (step * 2) === 0 ? "bg-white" : "bg-slate-50/30";
+
+          let rowTotal = 0;
+          let cellsHtml = `<td class="pl-6 font-bold text-slate-500 border-r bg-inherit sticky left-0 text-left">${timeStr}</td>`;
+
+          for (let d = 0; d < 7; d++) {
+            const baseVal = 30 + Math.floor(Math.random() * 60);
+            rowTotal += baseVal; // Calculate initial random sum
+            cellsHtml += `
+                <td class="border-r">
+                    <div class="flex items-center justify-center">
+                        <div class="flex items-center w-fit">
+                            <span class="text-slate-400 mr-0.5">$</span>
+                            <input type="text" value="${baseVal}" class="hourly-cell-input" oninput="updateRowTotal(this)">
+                        </div>
+                    </div>
+                </td>`;
+          }
+
+          // Use a specific class 'row-total-display' so we can find it easily later
+          cellsHtml += `<td class="text-center pr-6 font-bold text-slate-800 row-total-display">$${rowTotal.toLocaleString()}</td>`;
+          row.innerHTML = cellsHtml;
+          body.appendChild(row);
+        }
+      }
+
+      // Add this helper function to handle live updates
+      function updateRowTotal(inputElement) {
+        const row = inputElement.closest("tr");
+        const inputs = row.querySelectorAll(".hourly-cell-input");
+        const totalCell = row.querySelector(".row-total-display");
+
+        let sum = 0;
+        inputs.forEach((input) => {
+          const val = parseFloat(input.value) || 0;
+          sum += val;
+        });
+
+        totalCell.innerText = `$${sum.toLocaleString()}`;
+      }
+
+      window.onload = function () {
+        renderChart("mainChart", "area");
+        renderChart("trendChart", "area");
+        renderChart("accuracyChart", "area");
+        renderChart("hoursChart", "bar");
+      };
+
+      function toggleReferenceRows() {
+        const refRows = document.getElementById("reference-rows");
+        const chevron = document.getElementById("ref-chevron");
+
+        // Check current state based on visibility
+        const isVisible = !refRows.classList.contains("hidden");
+
+        if (isVisible) {
+          refRows.classList.add("hidden");
+          chevron.classList.remove("rotate-180");
+          chevron.style.transform = "rotate(0deg)"; // Backup for explicit transform
+        } else {
+          refRows.classList.remove("hidden");
+          chevron.classList.add("rotate-180");
+          chevron.style.transform = "rotate(180deg)";
+        }
+      }
+
+      function showChartTable(id, title) {
+        // 1. Open the standard maximize modal
+        maximizeChart(id, title);
+
+        // 2. Force the view to 'table'
+        updateModalView("table");
+
+        // 3. Ensure the Modal Options (Bar/Pie/Trend) are hidden as requested for detail views
+        document.getElementById("modalOptions").style.display = "none";
+      }
+
+      let cateringData = [
+        {
+          datetime: "2026-03-06T12:30",
+          name: "Alpha Tech Solutions",
+          email: "corp-orders@alphatech.com",
+          mobile: "555-0101",
+          amount: 1250.5,
+        },
+        {
+          datetime: "2026-03-06T19:00",
+          name: "Riverside Wedding",
+          email: "sarah.event@gmail.com",
+          mobile: "555-0456",
+          amount: 4800.0,
+        },
+        {
+          datetime: "2026-03-07T08:30",
+          name: "Morning Star Networking",
+          email: "info@morningstar.org",
+          mobile: "555-0988",
+          amount: 650.0,
+        },
+        {
+          datetime: "2026-03-07T13:00",
+          name: "Green Valley Hospital",
+          email: "dietary@greenvalley.com",
+          mobile: "555-0222",
+          amount: 2100.75,
+        },
+        {
+          datetime: "2026-03-08T18:30",
+          name: "Downtown Arts Gala",
+          email: "galacoord@cityarts.gov",
+          mobile: "555-1123",
+          amount: 5500.0,
+        },
+        {
+          datetime: "2026-03-09T11:45",
+          name: "Pinnacle Real Estate",
+          email: "closing@pinnacle.re",
+          mobile: "555-0874",
+          amount: 925.25,
+        },
+        {
+          datetime: "2026-03-10T20:00",
+          name: "Oceanic Launch Party",
+          email: "vip@oceanic.io",
+          mobile: "555-5567",
+          amount: 3200.0,
+        },
+      ];
+
+      let toastTimer; // Variable to track the timer
+
+      function showToast(message) {
+        const toast = document.getElementById("toast-container");
+        const msgElement = document.getElementById("toast-msg");
+
+        if (!toast || !msgElement) return;
+
+        // Clear any existing timer to prevent overlapping
+        clearTimeout(toastTimer);
+
+        msgElement.innerText = message;
+        toast.style.right = "20px"; // Slide in
+
+        // Auto-hide after 3 seconds
+        toastTimer = setTimeout(() => {
+          toast.style.right = "-10000px"; // Slide out
+        }, 3000);
+      }
+
+      function toggleCateringModal(show) {
+        const modal = document.getElementById("cateringModal");
+        show ? modal.classList.add("active") : modal.classList.remove("active");
+      }
+
+      function renderCateringTable() {
+        const body = document.getElementById("catering-table-body");
+        if (!body) return;
+        body.innerHTML = cateringData
+          .map((item, index) => {
+            // Format the date/time for display
+            const dateObj = new Date(item.datetime);
+            const displayDate = dateObj.toLocaleString([], {
+              year: "numeric",
+              month: "2-digit",
+              day: "2-digit",
+              hour: "2-digit",
+              minute: "2-digit",
+            });
+
+            return `
+      <tr class="hover:bg-slate-50/50">
+        <td class="pl-6 py-4 font-bold text-indigo-600 text-xs">${displayDate}</td>
+        <td class="font-bold text-slate-700">${item.name}</td>
+        <td class="text-slate-500 text-xs">${item.email || "—"}</td>
+        <td class="text-slate-600">${item.mobile || "—"}</td>
+        <td class="font-extrabold text-slate-900">$${Number(item.amount).toLocaleString()}</td>
+        <td class="text-right pr-6">
+          <button onclick="editEntry(${index})" class="p-2 text-blue-600"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
+          <button onclick="deleteEntry(${index})" class="p-2 text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+        </td>
+      </tr>
+    `;
+          })
+          .join("");
+        lucide.createIcons();
+      }
+
+      // 4. Form Submission with Validation
+      // 1. Unified Form Submission
+
+      // 2. Updated Modal Open (Resets everything correctly)
+
+      function deleteEntry(index) {
+        if (confirm("Are you sure you want to delete this record?")) {
+          cateringData.splice(index, 1);
+          renderCateringTable();
+        }
+      }
+
+      function editEntry(index) {
+        const item = cateringData[index];
+        const [date, time] = item.datetime.split("T");
+
+        document.getElementById("modal-heading").innerText = "Edit Catering";
+        document.getElementById("edit-index").value = index;
+
+        // Update Button UI for Edit Mode
+        document.getElementById("cat-btn-text").innerText = "Save";
+        document
+          .getElementById("cat-btn-icon")
+          .setAttribute("data-lucide", "save");
+
+        document.getElementById("cat-date").value = date;
+        document.getElementById("cat-time").value = time;
+        document.getElementById("cat-name").value = item.name;
+        document.getElementById("cat-email").value = item.email;
+        document.getElementById("cat-mobile").value = item.mobile;
+        document.getElementById("cat-amount").value = item.amount;
+
+        toggleCateringModal(true);
+        lucide.createIcons(); // Refresh icons to show the 'save' icon
+      }
+
+      function openCateringModal() {
+        const form = document.getElementById("cateringForm");
+        if (form) form.reset();
+
+        // Clear Estimated fields
+        const estStart = document.getElementById("cat-est-start");
+        const estEnd = document.getElementById("cat-est-end");
+        if (estStart) estStart.value = "";
+        if (estEnd) estEnd.value = "";
+
+        // UI Reset
+        document.getElementById("modal-heading").innerText = "Add Catering";
+        document.getElementById("edit-index").value = "-1";
+
+        const btnText = document.getElementById("cat-btn-text");
+        const btnIcon = document.getElementById("cat-btn-icon");
+
+        if (btnText) btnText.innerText = "Add";
+        if (btnIcon) btnIcon.setAttribute("data-lucide", "plus");
+
+        toggleCateringModal(true);
+        if (window.lucide) lucide.createIcons();
+      }
+
+      // Handle Form Submission
+      document.getElementById("cateringForm").onsubmit = function (e) {
+        e.preventDefault();
+
+        const dateVal = document.getElementById("cat-date").value;
+        const timeVal = document.getElementById("cat-time").value;
+        const name = document.getElementById("cat-name").value;
+        const amount = document.getElementById("cat-amount").value;
+
+        // 1. Validation: Ensure toast clears correctly
+        if (!dateVal || !timeVal || !name || !amount) {
+          showToast("Mandatory fields (Date, Time, Name, Amount) required!");
+          return;
+        }
+
+        const index = parseInt(document.getElementById("edit-index").value);
+        const newItem = {
+          datetime: `${dateVal}T${timeVal}`, // Combine for the table
+          name: name,
+          amount: amount,
+          email: document.getElementById("cat-email").value,
+          mobile: document.getElementById("cat-mobile").value,
+        };
+
+        if (index === -1) cateringData.unshift(newItem);
+        else cateringData[index] = newItem;
+
+        renderCateringTable();
+        toggleCateringModal(false);
+      };
+
+      // Auto-update Estimated fields when Time is changed
+      document
+        .getElementById("cat-time")
+        .addEventListener("input", function (e) {
+          const estStart = document.getElementById("cat-est-start");
+          const estEnd = document.getElementById("cat-est-end");
+
+          if (e.target.value) {
+            estStart.value = "03:00";
+            estEnd.value = "23:45";
+          } else {
+            estStart.value = "";
+            estEnd.value = "";
+          }
+        });
+
+      // HOURLY FORECAST MODAL FUNCTIONS
+      let dailyHourlyInterval = "hourly";
+      let currentDayForHourly = "Monday";
+      const dayIndexMap = {
+        Monday: 0,
+        Tuesday: 1,
+        Wednesday: 2,
+        Thursday: 3,
+        Friday: 4,
+        Saturday: 5,
+        Sunday: 6,
+      };
+      const dayAbbrMap = {
+        Monday: "MON",
+        Tuesday: "TUE",
+        Wednesday: "WED",
+        Thursday: "THU",
+        Friday: "FRI",
+        Saturday: "SAT",
+        Sunday: "SUN",
+      };
+
+      function openHourlyForecastModal(day) {
+        document.getElementById("hourlyForecastModal").classList.add("active");
+        currentDayForHourly = day;
+        dailyHourlyInterval = "hourly";
+        document.getElementById("dailyHourlyTitle").innerText =
+          `${day} - Hourly Forecast`;
+        document.getElementById("dailyDayHeader").innerText = "Sales $";
+
+        // Reset interval buttons
+        document.getElementById("daily-int-hourly").className =
+          "px-4 py-1.5 rounded-md transition-all bg-white text-indigo-600 shadow-sm";
+        document.getElementById("daily-int-15min").className =
+          "px-4 py-1.5 rounded-md transition-all text-slate-500 hover:text-slate-800";
+
+        renderDailyHourlyTable(day);
+        lucide.createIcons();
+      }
+
+      function closeHourlyForecastModal() {
+        document
+          .getElementById("hourlyForecastModal")
+          .classList.remove("active");
+      }
+
+      function setDailyHourlyInterval(val) {
+        dailyHourlyInterval = val;
+        document.getElementById("daily-int-hourly").className =
+          val === "hourly"
+            ? "px-4 py-1.5 rounded-md transition-all bg-white text-indigo-600 shadow-sm"
+            : "px-4 py-1.5 rounded-md transition-all text-slate-500 hover:text-slate-800";
+        document.getElementById("daily-int-15min").className =
+          val === "15min"
+            ? "px-4 py-1.5 rounded-md transition-all bg-white text-indigo-600 shadow-sm"
+            : "px-4 py-1.5 rounded-md transition-all text-slate-500 hover:text-slate-800";
+        renderDailyHourlyTable(currentDayForHourly);
+      }
+
+      function renderDailyHourlyTable(day) {
+        const tbody = document.getElementById("dailyHourlyTableBody");
+        tbody.innerHTML = "";
+
+        const step = dailyHourlyInterval === "hourly" ? 60 : 15;
+        const totalMinutes = 24 * 60;
+        let startTime = 240; // 4:00 AM
+        let timeIndex = 0;
+
+        for (let i = 0; i < totalMinutes; i += step) {
+          const currentMins = (startTime + i) % (24 * 60);
+          const hour = Math.floor(currentMins / 60);
+          const mins = currentMins % 60;
+          const ampm = hour >= 12 ? "PM" : "AM";
+          const displayHour = hour % 12 === 0 ? 12 : hour % 12;
+          const timeStr = `${displayHour}:${mins.toString().padStart(2, "0")} ${ampm}`;
+
+          const baseVal = 30 + Math.floor(Math.random() * 60);
+
+          const row = document.createElement("tr");
+          row.className = i % (step * 2) === 0 ? "bg-white" : "bg-slate-50/30";
+
+          const rowHtml = `
+            <td class="pl-6 font-bold text-slate-500 border-r bg-inherit sticky left-0 text-left">${timeStr}</td>
+            <td class="border-r">
+              <div class="flex items-center justify-center">
+                <div class="flex items-center w-fit">
+                  <span class="text-slate-400 mr-0.5">$</span>
+                  <input type="text" value="${baseVal}" class="hourly-cell-input" />
+                </div>
+              </div>
+            </td>
+          `;
+          row.innerHTML = rowHtml;
+          tbody.appendChild(row);
+          timeIndex++;
+        }
+      }
+
+      // INLINE HOURLY FORECAST FUNCTIONS
+      let currentDayForInlineHourly = "Monday";
+      let inlineHourlyInterval = "hourly";
+
+      function toggleInlineHourlyForecast(day) {
+        const section = document.getElementById("inlineHourlyForecastSection");
+        
+        if (section.classList.contains("hidden")) {
+          // Show the section
+          section.classList.remove("hidden");
+          currentDayForInlineHourly = day;
+          inlineHourlyInterval = "hourly";
+          document.getElementById("inlineHourlyTitle").innerText =
+            `${day} - Hourly Forecast`;
+          document.getElementById("inlineDayHeader").innerText = "Sales $";
+
+          // Reset interval buttons
+          document.getElementById("inline-int-hourly").className =
+            "px-4 py-1.5 rounded-md transition-all bg-white text-indigo-600 shadow-sm";
+          document.getElementById("inline-int-15min").className =
+            "px-4 py-1.5 rounded-md transition-all text-slate-500 hover:text-slate-800";
+
+          renderInlineHourlyTable(day);
+          lucide.createIcons();
+        } else if (currentDayForInlineHourly === day) {
+          // If clicking the same day, close it
+          section.classList.add("hidden");
+        } else {
+          // If clicking a different day, switch to that day
+          currentDayForInlineHourly = day;
+          document.getElementById("inlineHourlyTitle").innerText =
+            `${day} - Hourly Forecast`;
+          document.getElementById("inlineDayHeader").innerText = "Sales $";
+
+          // Reset interval buttons
+          document.getElementById("inline-int-hourly").className =
+            "px-4 py-1.5 rounded-md transition-all bg-white text-indigo-600 shadow-sm";
+          document.getElementById("inline-int-15min").className =
+            "px-4 py-1.5 rounded-md transition-all text-slate-500 hover:text-slate-800";
+
+          renderInlineHourlyTable(day);
+        }
+      }
+
+      function closeInlineHourlyForecast() {
+        document
+          .getElementById("inlineHourlyForecastSection")
+          .classList.add("hidden");
+      }
+
+      function setInlineHourlyInterval(val) {
+        inlineHourlyInterval = val;
+        document.getElementById("inline-int-hourly").className =
+          val === "hourly"
+            ? "px-4 py-1.5 rounded-md transition-all bg-white text-indigo-600 shadow-sm"
+            : "px-4 py-1.5 rounded-md transition-all text-slate-500 hover:text-slate-800";
+        document.getElementById("inline-int-15min").className =
+          val === "15min"
+            ? "px-4 py-1.5 rounded-md transition-all bg-white text-indigo-600 shadow-sm"
+            : "px-4 py-1.5 rounded-md transition-all text-slate-500 hover:text-slate-800";
+        renderInlineHourlyTable(currentDayForInlineHourly);
+      }
+
+      function renderInlineHourlyTable(day) {
+        const tbody = document.getElementById("inlineHourlyTableBody");
+        tbody.innerHTML = "";
+
+        const step = inlineHourlyInterval === "hourly" ? 60 : 15;
+        const totalMinutes = 24 * 60;
+        let startTime = 240; // 4:00 AM
+        let timeIndex = 0;
+
+        for (let i = 0; i < totalMinutes; i += step) {
+          const currentMins = (startTime + i) % (24 * 60);
+          const hour = Math.floor(currentMins / 60);
+          const mins = currentMins % 60;
+          const ampm = hour >= 12 ? "PM" : "AM";
+          const displayHour = hour % 12 === 0 ? 12 : hour % 12;
+          const timeStr = `${displayHour}:${mins.toString().padStart(2, "0")} ${ampm}`;
+
+          const baseVal = 30 + Math.floor(Math.random() * 60);
+
+          const row = document.createElement("tr");
+          row.className = i % (step * 2) === 0 ? "bg-white" : "bg-slate-50/30";
+
+          const rowHtml = `
+            <td class="pl-6 font-bold text-slate-500 border-r bg-inherit sticky left-0 text-left">${timeStr}</td>
+            <td class="border-r">
+              <div class="flex items-center justify-center">
+                <div class="flex items-center w-fit">
+                  <span class="text-slate-400 mr-0.5">$</span>
+                  <input type="text" value="${baseVal}" class="hourly-cell-input" />
+                </div>
+              </div>
+            </td>
+          `;
+          row.innerHTML = rowHtml;
+          tbody.appendChild(row);
+          timeIndex++;
+        }
+      }
+
+      // TOGGLE MY FORECAST AND INCREASE/DECREASE ROWS
+      function toggleMyForecastRows() {
+        const toggle = document.getElementById("enableMyForecastToggle");
+        const myForecastRow = document.getElementById("myForecastRow");
+        const increaseDecreaseRow = document.getElementById("increaseDecreaseRow");
+        
+        if (toggle.checked) {
+          myForecastRow.classList.remove("hidden");
+          increaseDecreaseRow.classList.remove("hidden");
+        } else {
+          myForecastRow.classList.add("hidden");
+          increaseDecreaseRow.classList.add("hidden");
+        }
+      }
+
+      // AI FORECAST POPUP FUNCTIONS
+      function toggleAIFactorsPopup(event) {
+        event.stopPropagation();
+        const popup = document.getElementById("aiFactorsPopup");
+        const button = event.target.closest("button");
+        const rect = button.getBoundingClientRect();
+
+        if (popup.style.display === "none" || popup.style.display === "") {
+          popup.style.display = "block";
+          popup.style.top = rect.bottom + 20 + "px";
+          popup.style.left = rect.left + "px";
+        } else {
+          popup.style.display = "none";
+        }
+
+        lucide.createIcons();
+      }
+
+      // Close popup when clicking outside
+      document.addEventListener("click", function (event) {
+        const popup = document.getElementById("aiFactorsPopup");
+        const button = document.querySelector(
+          "[onclick*='toggleAIFactorsPopup']",
+        );
+        if (
+          popup &&
+          !popup.contains(event.target) &&
+          !button.contains(event.target)
+        ) {
+          popup.style.display = "none";
+        }
+      });
+    </script>
+  </body>
+</html>
